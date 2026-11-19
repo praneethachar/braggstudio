@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bragg Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eceff2; --panel:#ffffff; --ink:#16212b; --muted:#5b6876; --line:#d3dae1;
+  --accent:#0b7f94; --accent-ink:#ffffff; --warn:#a4561b; --match:#16a37f;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1317; --panel:#161d23; --ink:#e2e8ed; --muted:#8e9ba7; --line:#28323b;
+  --accent:#36c0d6; --accent-ink:#04161a; --warn:#e39a5f; --match:#3ddc97; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1317; --panel:#161d23; --ink:#e2e8ed; --muted:#8e9ba7; --line:#28323b;
+  --accent:#36c0d6; --accent-ink:#04161a; --warn:#e39a5f; --match:#3ddc97; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.45;padding-inline:16px;padding-block:14px 32px;margin:0}
+h1,h2{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;margin:0}
+h1{font-size:1.55rem}
+h2{font-size:1.05rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.wrap{margin:0 auto;display:grid;gap:14px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+header.top .brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+header.top .brand small{color:var(--muted);font-size:.85rem}
+.fileinfo{font-family:var(--f-data);font-size:.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 14px;min-width:0}
+.fileinfo b{color:var(--ink);font-weight:500}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid var(--line);font-size:.75rem;font-family:var(--f-body)}
+.chip.warn{border-color:var(--warn);color:var(--warn)}
+.spacer{flex:1}
+button,.btn{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:6px 12px;border-radius:var(--r);cursor:pointer;white-space:nowrap}
+button:hover,.btn:hover{border-color:var(--accent)}
+button.primary,.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible,.btn:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}
+input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-width:0}
+.row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row2 label,label.keys{font-size:.82rem;color:var(--muted)}
+input[type=number],input[type=text],input[type=search],select{font-family:var(--f-data);font-size:.82rem;width:100%;padding:4px 6px;border:1px solid var(--line);
+  border-radius:4px;background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums;min-width:0}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent)}
+.keys{font-size:.78rem;color:var(--muted);line-height:1.6}
+kbd{font-family:var(--f-data);font-size:.72rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;background:var(--bg);color:var(--ink)}
+.bench{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,46rem);gap:14px;align-items:start}
+@media (max-width:1100px){.bench{grid-template-columns:minmax(0,1fr)}}
+#chartWrap{position:relative;height:clamp(440px,62vh,820px);min-height:260px;resize:vertical;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+#chart{display:block;width:100%;height:100%;cursor:crosshair}
+.chartbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-bottom:8px}
+.tbrow{gap:8px 12px;flex-wrap:nowrap;align-items:stretch}
+.tbc{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;flex:1;min-width:0}
+.tbc .row2 input[type=number]{width:5.2rem}
+.tbl{font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);min-width:4.4rem;border-right:2px solid var(--line);padding-right:8px;align-self:stretch;display:flex;align-items:center}
+.tablebox{position:relative;max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-family:var(--f-data);font-size:.78rem;font-variant-numeric:tabular-nums}
+th,td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel);font-family:var(--f-body);font-weight:600;color:var(--muted);font-size:.74rem;z-index:1}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+tbody tr.sel td{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+tbody tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
+tr.focus td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.swc{width:1.4rem;height:1.2rem;padding:0;border:1px solid var(--line);border-radius:3px;vertical-align:-3px;margin-right:6px;cursor:pointer;background:none}
+.x{border:0;background:none;color:var(--muted);padding:0 4px;font-size:1rem}
+.x:hover{color:var(--warn)}
+.status{font-size:.82rem;color:var(--muted);min-height:1.2em}
+.status.err{color:var(--warn)}
+.empty{display:grid;place-items:center;height:100%;color:var(--muted);font-size:.9rem;text-align:center;padding:16px}
+#drop{position:fixed;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 82%,transparent);
+  border:3px dashed var(--accent);font-family:var(--f-display);font-size:1.6rem;z-index:10;pointer-events:none}
+.saves{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.welcome{justify-self:start;font-family:var(--f-display);font-size:1rem;font-weight:600;letter-spacing:.02em;color:var(--accent);border:1px solid var(--accent);border-radius:999px;padding:3px 14px;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.themeBox select{width:auto}.themeBox input[type=color]{width:2.2rem;height:1.7rem;padding:0 2px;vertical-align:middle;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+/* phase boxes */
+#phaseGroups{display:grid;gap:12px}
+#phaseBox:focus{outline:2px solid var(--accent);outline-offset:3px;border-radius:var(--r)}
+.pgroup{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);overflow:hidden}
+.pgroup .pgbody{max-height:320px;overflow:auto}
+.pghead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 8px;background:var(--bg);border-bottom:1px solid var(--line)}
+.pghead b{font-family:var(--f-display);font-size:.95rem;letter-spacing:.02em}
+.pghead .keys{margin-right:auto}
+.pghead button{padding:2px 8px;font-size:.75rem}
+.pgroup.star{border-color:#e0a800}.pgroup.star .pghead{background:color-mix(in srgb,#e0a800 14%,var(--bg))}
+.pgroup td:nth-child(2){text-align:left;white-space:normal;min-width:12rem}
+.starb{border:0;background:none;padding:0 0 0 6px;font-size:1.05rem;line-height:1;color:var(--muted);cursor:pointer;vertical-align:middle}.starb.on{color:#e0a800}.starb:hover{color:#e0a800}
+#lineBoxWrap{position:sticky;top:8px}
+#lineRows td:first-child{text-align:left}
+/* data / metadata */
+.kv{width:100%}
+.kv td{text-align:left;font-family:var(--f-body);font-size:.82rem;vertical-align:top;padding:4px 6px;white-space:normal;cursor:default}
+.kv tr:hover td{background:none}
+.kv td:first-child{color:var(--muted);width:40%}
+.kv td.v{font-family:var(--f-data);font-size:.8rem;word-break:break-word}
+.kv .note{display:block;color:var(--muted);opacity:.8;font-family:var(--f-body);font-size:.72rem}
+.kv input{width:7.5rem}
+.rangecard{border:1px solid var(--line);border-radius:var(--r);margin:8px 0;overflow:hidden}
+.rangecard .rh{background:var(--bg);padding:6px 8px;font-family:var(--f-display);font-weight:600;letter-spacing:.02em;display:flex;gap:8px;align-items:center}
+.rtag{font:500 .7rem var(--f-body);color:var(--accent);border:1px solid var(--accent);padding:0 6px;border-radius:999px}
+.dtag{font:500 .7rem var(--f-body);color:var(--warn);border:1px solid var(--warn);padding:0 6px;border-radius:999px}
+details summary{cursor:pointer;font-size:.82rem;color:var(--muted);margin-top:6px}
+.raw td{font-size:.74rem;cursor:default}
+.err{color:var(--warn);border:1px solid var(--warn);border-radius:var(--r);padding:4px 8px;margin:4px 0;font-size:.8rem}
+#traceRows td:nth-child(3){text-align:left}
+td.man{color:var(--accent)}
+td.mt{text-align:left;color:var(--match)}
+#readout{font-family:var(--f-data);font-size:.78rem;color:var(--ink);min-height:1.3em;display:flex;gap:16px;flex-wrap:wrap}
+.plotStar{position:absolute;left:6px;bottom:6px;z-index:3;padding:2px 9px;font-size:.8rem;opacity:.92;max-width:60%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.plotStar .nm{display:none;margin-left:5px}.plotStar:hover .nm{display:inline}.plotStar.on{background:#f2c94c;color:#1b1400;border-color:#d4a514}
+#cfsBox{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-top:8px;display:grid;gap:4px;font-size:12.5px}
+#cfsBox table{border-collapse:collapse;width:auto}#cfsBox td,#cfsBox th{padding:2px 8px;text-align:left;border-bottom:1px solid var(--line)}#cfsBox tr{cursor:default}
+#cfsBox th{font-weight:600;color:var(--muted);font-size:11.5px}#cfsBox input[type=number]{width:6.5rem;padding:1px 5px}#cfsBox input[type=range]{vertical-align:middle;width:9rem}
+#cfsBox .sw{display:inline-block;width:.9rem;height:.9rem;border-radius:3px;vertical-align:-2px;margin-right:5px}#cfsBox button{padding:0 7px}
+#chartWrap.wheelOn{outline:2px solid var(--accent);outline-offset:-2px}
+</style>
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Bragg Studio</h1><small>STOE .raw patterns, peaks and CIF phases</small>
+      <button id="setReset" title="Forget the remembered tick boxes, menus and sliders and go back to the defaults (stars and themes are kept)" style="padding:2px 9px;font-size:.78rem">↺ default settings</button>
+      <span class="row2 themeBox" style="gap:5px" title="Page theme: light, dark or as the system; and the accent colour of buttons and highlights"><label for="thMode" class="keys">theme</label><select id="thMode"><option value="auto">as system</option><option value="light">light</option><option value="dark">dark</option></select><label class="keys" for="thAcc">accent</label><input id="thAcc" type="color" title="Accent colour (buttons, highlights)"><label class="keys" for="thBg">page</label><input id="thBg" type="color" title="Page background"><label class="keys" for="thPanel">panels</label><input id="thPanel" type="color" title="Panel / plot background"><label class="keys" for="thInk">text</label><input id="thInk" type="color" title="Text colour (muted text and lines follow it)"><button id="thReset" title="Back to the default theme" style="padding:2px 8px">↺</button><select id="thPreset" title="Ready-made themes and the ones you saved"><option value="">themes…</option></select><button id="thSave" title="Save the current mode and colours as a theme" style="padding:2px 8px">💾</button><button id="thDel" title="Delete the selected saved theme" style="padding:2px 8px">🗑</button></span>
+    </div>
+  </header>
+  <header class="top">
+    <label class="btn primary" for="fileIn" title="STOE .raw (WinXPOW RAW_1.xx) or two-column .xy / .dat / .txt / .csv; several at once">Open .raw / .xy…<input id="fileIn" type="file" multiple accept=".raw,.RAW,.xy,.xye,.dat,.txt,.csv"></label>
+    <div class="fileinfo" id="fileinfo"><span>drop .raw / .xy data or .cif files (or folders of CIFs) anywhere on the page</span></div>
+  </header>
+  <div id="errors"></div>
+
+  <!-- ===================== PATTERN ===================== -->
+  <section class="panel" style="display:grid;gap:8px">
+    <div class="chartbar"><h2>Pattern</h2><span class="spacer"></span><span class="status" id="status"></span></div>
+    <div class="chartbar tbrow"><span class="tbl">view</span><div class="tbc">
+      <div class="row2"><label for="xmode">x axis</label><select id="xmode" style="width:auto"><option value="tth">2θ (°)</option><option value="d">d (Å)</option><option value="invd">1/d (nm⁻¹)</option><option value="q">Q (Å⁻¹)</option></select></div>
+      <div class="row2"><label for="xlo">from</label><input id="xlo" type="number" step="any" style="width:5.5rem"><label for="xhi">to</label><input id="xhi" type="number" step="any" style="width:5.5rem"><button id="zreset" title="Back to the full range (or double-click the plot)">Reset zoom</button></div>
+      <div class="row2"><label for="ymode">y</label><select id="ymode" style="width:auto"><option value="lin">linear</option><option value="sqrt">√ I</option><option value="log">log I</option></select></div>
+      <label class="keys"><input id="norm" type="checkbox"> normalise (max = 100)</label>
+      <div class="row2"><label for="offset">stack offset</label><input id="offset" type="range" min="0" max="100" value="0" style="width:6rem"><span class="keys" id="offv">0 %</span></div>
+      <div class="row2"><label for="lam" title="Used for d / Q axes and CIF sticks when a file has no λ, or when “file λ” is off">λ (Å)</label><input id="lam" type="number" step="0.000001" value="1.540598" style="width:6.5rem"><label><input id="lamFile" type="checkbox" checked> file λ1</label></div>
+    </div></div>
+    <div class="chartbar tbrow"><span class="tbl">peaks</span><div class="tbc">
+      <div class="row2"><label for="pSg" title="Savitzky–Golay, quadratic">smoothing</label><input id="pSg" type="number" min="1" step="2" value="11" style="width:4rem"><span class="keys">pts</span></div>
+      <div class="row2"><label for="pBg" title="SNIP background, window in ° 2θ">background</label><input id="pBg" type="number" min="0.05" step="0.1" value="2" style="width:4.5rem"><span class="keys">° 2θ</span></div>
+      <div class="row2"><label for="pK" title="A peak is kept when its prominence ≥ k·√background">prominence k</label><input id="pK" type="number" min="0" step="0.5" value="3" style="width:4rem"></div>
+      <div class="row2"><label for="pRel" title="Ignore peaks lower than this % of the strongest (net) peak">min height</label><input id="pRel" type="number" min="0" step="0.5" value="2" style="width:4rem"><span class="keys">%</span></div>
+      <div class="row2"><label for="pSep">min sep.</label><input id="pSep" type="number" min="0" step="0.05" value="0.2" style="width:4.5rem"><span class="keys">° 2θ</span></div>
+      <label class="keys"><input id="showBg" type="checkbox" checked> background</label>
+      <label class="keys"><input id="showSm" type="checkbox"> smoothed</label>
+      <label class="keys"><input id="showPk" type="checkbox" checked> markers</label>
+      <label class="keys"><input id="pkAll" type="checkbox"> on all traces</label>
+      <label class="keys" title="Vertical line at each peak of the active trace"><input id="pkLines" type="checkbox"> peak lines</label>
+    </div></div>
+    <div class="chartbar tbrow"><span class="tbl">CIF</span><div class="tbc">
+      <div class="row2"><label for="stH" title="Height of a 100 % CIF line, as a fraction of the plot height">stick height</label><input id="stH" type="range" min="5" max="100" step="1" value="35" style="width:7rem"><span class="keys" id="stHv">35 %</span></div>
+      <label class="keys" title="Every CIF line runs the full plot height (intensity shown as opacity)"><input id="stFull" type="checkbox"> full-height lines</label>
+      <label class="keys"><input id="cLab" type="checkbox" checked> hkl labels</label>
+      <label class="keys"><input id="cLabD" type="checkbox"> d labels</label>
+      <div class="row2"><label for="cLabSize">size</label><input id="cLabSize" type="number" min="6" max="30" step="1" value="10" style="width:3.6rem"></div>
+      <label class="keys" title="Also draw the Kα2 lines (λ2 of the file) at half intensity, dashed"><input id="ka2" type="checkbox"> Kα2 sticks</label>
+      <div class="row2"><label for="mTol" title="An observed peak matches a CIF line when it is within this distance">match ±</label><input id="mTol" type="number" min="0.01" step="0.01" value="0.15" style="width:4.5rem"><span class="keys">° 2θ</span></div>
+    </div></div>
+    <div class="chartbar tbrow"><span class="tbl">style</span><div class="tbc">
+      <div class="row2"><label for="pb">plot background</label><select id="pb" style="width:auto"><option value="theme">as panels</option><option value="white">white</option><option value="black">black</option><option value="transparent">none (transparent)</option><option value="custom">colour…</option></select><input id="pbCol" type="color" value="#ffffff" hidden style="width:2.2rem;height:1.7rem;padding:0 2px"></div>
+      <div class="row2"><label for="fs">text size</label><input id="fs" type="number" min="8" max="24" step="1" value="12" style="width:3.6rem"></div>
+      <div class="row2"><label for="lw">line width</label><input id="lw" type="number" min="0.5" max="5" step="0.25" value="1.25" style="width:4rem"></div>
+    </div></div>
+    <div>
+      <div id="chartWrap" title="Drag the bottom-right corner to change the plot height"><button id="plotStar" class="plotStar" hidden title="Star / unstar the highlighted CIF phase (also the s key in the phase list)">☆ star<span class="nm"></span></button><canvas id="chart" aria-label="Diffraction pattern"></canvas>
+        <div class="empty" id="chartEmpty" style="position:absolute;inset:0">Open or drop STOE .raw files (or two-column .xy), then add CIF files to compare.</div></div>
+      <div id="readout" style="margin-top:6px"></div>
+      <div id="cfsBox"></div>
+    </div>
+    <div class="keys">zoom: <kbd>click</kbd> the plot first to switch on <kbd>wheel</kbd> zoom (outlined while on; click outside or <kbd>Esc</kbd> to switch off, so the page scrolls normally), or <kbd>drag</kbd> a box, <kbd>double-click</kbd> to reset · <kbd>shift</kbd>+<kbd>click</kbd> adds a peak at the nearest maximum, × in the table removes one · <kbd>click</kbd> a table row to zoom to that peak · marker colours with CIF phases shown: <span style="color:var(--match)">■</span> matched within ± tolerance, <span style="color:var(--warn)">■</span> not matched</div>
+    <div class="saves">
+      <h2 style="margin-right:6px">Save</h2>
+      <button id="svPlot" disabled title="The plot as shown, with sticks and legends, at screen resolution ×2">Plot (PNG)</button>
+      <button id="cpPlot" disabled title="Copy the plot to the clipboard as an image, to paste with Ctrl+V">📋 Copy</button>
+      <button id="svPeaks" disabled>Peak list (.csv)</button>
+      <button id="svData" disabled title="Active trace: 2θ, counts, smoothed, background">Data (.xy)</button>
+      <button id="svMeta" disabled>Metadata (.json)</button>
+      <button id="svLines" disabled title="Line list of the highlighted CIF phase at the current λ, s and zero shift">CIF lines (.csv)</button>
+      <span class="status" id="saveStatus">Files are only written when you press a Save button.</span>
+    </div>
+  </section>
+
+  <!-- ===================== DATA ===================== -->
+  <section class="panel" style="display:grid;gap:10px">
+    <div class="chartbar"><button class="coll" data-t="dataBody" style="padding:2px 9px">▾</button><h2>Data files</h2><span class="keys" id="dataCount"></span><span class="spacer"></span><button id="clearData" disabled>Remove all</button></div>
+    <div id="dataBody" style="display:grid;gap:12px">
+    <div class="bench" style="grid-template-columns:minmax(0,1fr) minmax(0,30rem)">
+      <div class="tablebox" style="max-height:520px"><table><thead><tr><th>show</th><th></th><th style="text-align:left">trace</th><th>2θ range (°)</th><th>step (°)</th><th>points</th><th>λ1 (Å)</th><th>peaks</th><th></th></tr></thead><tbody id="traceRows"><tr><td colspan="9" style="text-align:center;color:var(--muted)">no data loaded</td></tr></tbody></table></div>
+      <div id="meta" class="tablebox" style="max-height:520px;padding:6px 10px"><div class="keys">click a trace to see its metadata</div></div>
+    </div>
+    <div style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px">
+      <div class="row2"><button class="coll" data-t="peakBody" style="padding:2px 9px" aria-label="collapse peak list">▾</button><b id="peakTitle" style="font-family:var(--f-display);letter-spacing:.02em;font-size:1rem">Peaks</b><span class="keys" id="peakSub"></span><span class="spacer"></span><label class="keys"><input id="expAll" type="checkbox"> export all traces</label></div>
+      <div id="peakBody" class="tablebox" style="max-height:480px"><table><thead><tr><th>#</th><th>2θ (°)</th><th>d (Å)</th><th>1/d (nm⁻¹)</th><th>FWHM (°)</th><th>I net</th><th>Area</th><th>I rel %</th><th style="text-align:left">CIF match</th><th></th></tr></thead><tbody id="peaks"><tr><td colspan="10" style="text-align:center;color:var(--muted)">no data</td></tr></tbody></table></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- ===================== PHASES ===================== -->
+  <section class="panel" style="display:grid;gap:10px">
+    <div class="chartbar">
+      <button class="coll" data-t="phaseBody" style="padding:2px 9px">▾</button><h2>Phases from CIF</h2>
+      <label class="btn primary" for="cifDir" title="Pick a folder; every sub-folder with CIFs gets its own box. Opens where you last picked CIFs">Add folder…<input id="cifDir" type="file" webkitdirectory directory multiple></label>
+      <label class="btn" for="cifIn" title="Pick CIF files. Opens in the folder you last picked CIFs from">Add CIF files…<input id="cifIn" type="file" accept=".cif,.CIF" multiple></label>
+      <span id="cifRecent" class="row2" style="gap:6px;flex-wrap:wrap" title="Recently loaded CIF folders / file sets: ↻ loads them again without the dialog"></span>
+      <span class="row2" style="gap:4px"><button id="cBest" disabled title="Rank the phases against the peaks of the active trace and highlight the best one">★ Best fit</button><button id="cBestPrev" disabled aria-label="Previous fit">◀</button><button id="cBestNext" disabled aria-label="Next fit">▶</button><label for="cBestIn">in</label><select id="cBestIn" style="width:auto;min-width:8rem;max-width:14rem" disabled><option value="">all folders</option></select></span>
+      <div class="row2"><label for="cs" title="d_obs = s × d_calc (lattice expansion / calibration), all phases">scale s</label><input id="cs" type="range" min="0.95" max="1.05" step="0.0005" value="1" style="width:8rem"><input id="csN" type="number" step="0.0005" value="1" style="width:5.6rem"><button id="fitS" disabled title="Fit s for the highlighted phase: searches s = 0.97–1.03 for the most matched peaks, then least-squares d_obs = s·d_calc on the matched pairs">fit s</button><button id="s1" title="Back to s = 1" style="padding:2px 8px">1</button></div>
+      <div class="row2"><label for="z0" title="2θ_obs = 2θ_calc + zero shift">zero shift</label><input id="z0" type="number" step="0.005" value="0" style="width:5rem"><span class="keys">° 2θ</span></div>
+      <div class="row2"><label for="cmin">lines ≥</label><input id="cmin" type="number" min="0" max="100" step="1" value="2" style="width:4rem"><span class="keys">% I</span></div>
+      <span class="row2" style="gap:4px"><label for="cSearch">search</label><input id="cSearch" type="search" placeholder="ICSD / COD no., formula or file" style="width:13rem"><button id="cSearchX" aria-label="clear search">✕</button></span>
+      <span class="spacer"></span><button id="cClear" disabled>Remove all</button>
+    </div>
+    <div id="phaseBody" style="display:grid;gap:10px">
+      <div class="keys">Add .cif files or whole folders (each folder gets its own box). <kbd>click</kbd> a phase to highlight it (preview sticks on the plot), <kbd>↑</kbd><kbd>↓</kbd> step through, <kbd>space</kbd> ticks it to keep it shown, <kbd>Esc</kbd> un-highlights. Powder intensities: I ∝ m·|F|²·LP, LP = (1+cos²2θ)/(sin²θ·cosθ) (no monochromator), X-ray form factors of neutral atoms (Waasmaier–Kirfel), Debye–Waller from the CIF B/U (0 if absent), no anomalous dispersion, absorption or preferred orientation. Sticks at λ1 of the active trace. <span id="cifStatus" style="color:var(--ink)"></span></div>
+      <div class="bench" style="grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)">
+        <div id="phaseBox" tabindex="0" aria-label="Phases: arrow keys move the highlight, space ticks"><div id="phaseGroups"><div class="keys" style="padding:12px;text-align:center">no CIF loaded</div></div></div>
+        <div id="lineBoxWrap"><div class="row2" style="margin-bottom:6px"><b id="lineTitle" style="font-family:var(--f-display);letter-spacing:.02em">Lines</b><span class="keys" id="lineSub"></span></div>
+          <div class="tablebox" style="max-height:560px"><table><thead><tr><th style="text-align:left">hkl</th><th>m</th><th>d calc</th><th>d × s</th><th>2θ (°)</th><th>I %</th><th>obs peak</th></tr></thead>
+          <tbody id="lineRows"><tr><td colspan="7" style="text-align:center;color:var(--muted)">click a phase to list its lines</td></tr></tbody></table></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="drop" hidden>Drop .raw / .xy data or .cif files</div>
+
+<script>
+
+const KNOWN_LINES = [
+  ['Cu Kα1',1.540598],['Cu Kα2',1.544426],['Cu Kα(avg)',1.541874],
+  ['Mo Kα1',0.709319],['Mo Kα2',0.713609],['Co Kα1',1.788996],['Co Kα2',1.792835],
+  ['Fe Kα1',1.936042],['Fe Kα2',1.939980],['Cr Kα1',2.289760],['Cr Kα2',2.293663],
+  ['Ag Kα1',0.559421],['Ag Kα2',0.563813],['Ga Kα1',1.340140]
+];
+function lineName(l){
+  let best=null, bd=1e9;
+  for(const [n,v] of KNOWN_LINES){ const d=Math.abs(v-l); if(d<bd){bd=d;best=n;} }
+  return bd<2e-4 ? best : null;
+}
+const MONTHS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+const DATE_RE=/^\d{1,2}-[A-Za-z]{3}-\d{2,4}\s+\d{1,2}:\d{2}/;
+function parseStoeDate(s){
+  const m=/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s||'');
+  if(!m) return null;
+  const mo=MONTHS[m[2].toLowerCase()]; if(mo===undefined) return null;
+  let y=+m[3]; if(y<100) y+=2000;
+  return new Date(y,mo,+m[1],+m[4],+m[5],+(m[6]||0));
+}
+function readStr(u8,o,n){
+  let s=''; for(let i=0;i<n && o+i<u8.length;i++){ const c=u8[o+i]; if(c===0) break; s+=String.fromCharCode(c); }
+  return s;
+}
+function printableRuns(u8,a,b,minLen){
+  const out=[]; let s='', st=a;
+  for(let i=a;i<b && i<u8.length;i++){
+    const c=u8[i];
+    if(c>=32 && c<127){ if(!s) st=i; s+=String.fromCharCode(c); }
+    else { if(s.trim().length>=minLen) out.push([st,s.trim()]); s=''; }
+  }
+  if(s.trim().length>=minLen) out.push([st,s.trim()]);
+  return out;
+}
+/* float32 → the shortest decimal that round-trips to the same float32 (removes float32 storage noise like 0.0149999997) */
+function f32clean(v){
+  if(!isFinite(v)) return v;
+  const f=Math.fround(v);
+  for(let p=1;p<=9;p++){ const c=Number(f.toPrecision(p)); if(Math.fround(c)===f) return c; }
+  return f;
+}
+function plausibleFloat(v){ const a=Math.abs(v); return isFinite(v) && a>=1e-4 && a<1e7; }
+
+function parseStoeRaw(buf, name){
+  const dv=new DataView(buf), u8=new Uint8Array(buf), N=buf.byteLength;
+  const f32=o=>f32clean(dv.getFloat32(o,true));
+  const magic=readStr(u8,0,8);
+  const meta={name, size:N, format:'STOE WinXPOW binary ('+magic+')', fields:[], ranges:[], header:[], warnings:[]};
+  const F=(k,v,note)=>meta.fields.push([k,v,note||'']);
+  F('Format', magic, 'magic @0x000');
+  F('Data type', readStr(u8,8,8), '@0x008');
+  F('File created', readStr(u8,16,16), '@0x010');
+  F('Title', readStr(u8,32,272), '@0x020');
+  if(N>334){
+    const l1=f32(322), l2=f32(326);
+    meta.lambda1=l1; meta.lambda2=l2;
+    F('λ1 (Å)', String(l1), '@0x142'+(lineName(l1)?' — matches '+lineName(l1):' — field assignment inferred'));
+    F('λ2 (Å)', String(l2), '@0x146'+(lineName(l2)?' — matches '+lineName(l2):' — field assignment inferred'));
+  }
+  for(const [o,s] of printableRuns(u8,512,2048,4)) if((s.match(/[A-Za-z]/g)||[]).length>=3) F('Text', s, '@0x'+o.toString(16).padStart(3,'0')+' (unidentified field)');
+
+  /* undecoded header words (0x130–0x7FF), shown verbatim */
+  for(let o=0x130;o<Math.min(2048,N-4);o+=2){
+    const w=dv.getUint16(o,true);
+    if(w===0) continue;
+    if(u8[o]>=32&&u8[o]<127&&u8[o+1]>=32&&u8[o+1]<127) continue; // part of a text run, already shown
+    const fv=dv.getFloat32(o,true);
+    meta.header.push({off:o,u16:w,i32:dv.getInt32(o,true),f32:plausibleFloat(fv)?f32clean(fv):null,
+      hex:Array.from(u8.slice(o,o+4)).map(b=>b.toString(16).padStart(2,'0')).join(' ')});
+  }
+
+  /* ranges: 512-byte header record (starts with two date strings) followed by int32 counts, padded to 512 */
+  let off=2048;
+  while(off+512<=N){
+    const d1=readStr(u8,off,16);
+    if(!DATE_RE.test(d1)){ off+=512; continue; }
+    const np=dv.getUint32(off+34,true);
+    if(np<2 || off+512+np*4>N){ off+=512; continue; }
+    const r={index:meta.ranges.length+1, offset:off, start:d1, end:readStr(u8,off+16,16),
+      flag:dv.getUint16(off+32,true), npts:np,
+      tth0:f32(off+44), om0:f32(off+48), tth1:f32(off+52), om1:f32(off+56),
+      dtth:f32(off+60), dom:f32(off+64), v68:f32(off+68),
+      sMin:dv.getUint32(off+120,true), sMax:dv.getUint32(off+124,true)};
+    const y=new Float64Array(np);
+    for(let i=0;i<np;i++) y[i]=dv.getInt32(off+512+4*i,true);
+    const tth=new Float64Array(np);
+    const step=(r.dtth>0)?r.dtth:(r.tth1-r.tth0)/(np-1);
+    for(let i=0;i<np;i++) tth[i]=r.tth0+i*step;
+    r.tthEndCalc=r.tth0+(np-1)*step;
+    if(Math.abs(r.tthEndCalc-r.tth1)>step*0.5) meta.warnings.push('Range '+r.index+': start + (n−1)·step = '+r.tthEndCalc+' ≠ stored end '+r.tth1);
+    const t0=parseStoeDate(r.start), t1=parseStoeDate(r.end);
+    r.durMin=(t0&&t1)?(t1-t0)/60000:null;
+    let mn=Infinity,mx=-Infinity,imx=0,sum=0;
+    for(let i=0;i<np;i++){ const v=y[i]; sum+=v; if(v<mn)mn=v; if(v>mx){mx=v;imx=i;} }
+    r.min=mn; r.max=mx; r.tthAtMax=tth[imx]; r.sum=sum;
+    r.tthAtMaxAll=[]; for(let i=0;i<np;i++) if(y[i]===mx) r.tthAtMaxAll.push(tth[i]);
+    r.extra=[];
+    for(let o=72;o<512;o+=4){ if(o===120||o===124) continue; const w=dv.getUint32(off+o,true); if(w) r.extra.push({off:o,u32:w,f32:plausibleFloat(dv.getFloat32(off+o,true))?f32clean(dv.getFloat32(off+o,true)):null}); }
+    r.tth=tth; r.y=y;
+    meta.ranges.push(r);
+    off += 512 + Math.ceil(np*4/512)*512;
+  }
+  if(!meta.ranges.length) throw new Error('STOE header found but no scan ranges could be decoded.');
+  F('Scan ranges', String(meta.ranges.length), 'decoded');
+  /* identical-range detection */
+  for(const r of meta.ranges){
+    for(const q of meta.ranges){
+      if(q===r) break;
+      if(q.npts===r.npts && q.tth0===r.tth0 && q.dtth===r.dtth){
+        let same=true; for(let i=0;i<r.npts;i++){ if(q.y[i]!==r.y[i]){same=false;break;} }
+        if(same){ r.dupOf=q.index; break; }
+      }
+    }
+  }
+  return meta;
+}
+
+function parseTextXY(txt, name){
+  const xs=[], ys=[];
+  for(const line of txt.split(/\r?\n/)){
+    const t=line.trim(); if(!t || /^[#!;%'"]/.test(t)) continue;
+    const parts=t.split(/[\s,;]+/);
+    if(parts.length<2) continue;
+    const a=Number(parts[0]), b=Number(parts[1]);
+    if(!isFinite(a)||!isFinite(b)) continue;
+    xs.push(a); ys.push(b);
+  }
+  if(xs.length<10) throw new Error('Not a recognised binary format and no two-column numeric data found.');
+  const tth=Float64Array.from(xs), y=Float64Array.from(ys);
+  let mn=Infinity,mx=-Infinity,imx=0,sum=0;
+  for(let i=0;i<y.length;i++){ const v=y[i]; sum+=v; if(v<mn)mn=v; if(v>mx){mx=v;imx=i;} }
+  const r={index:1,npts:y.length,tth0:tth[0],tth1:tth[tth.length-1],dtth:(tth[tth.length-1]-tth[0])/(tth.length-1),
+    min:mn,max:mx,tthAtMax:tth[imx],sum,tth,y,text:true};
+  r.tthAtMaxAll=[]; for(let i=0;i<y.length;i++) if(y[i]===mx) r.tthAtMaxAll.push(tth[i]);
+  return {name,size:txt.length,format:'Text, two columns (x assumed 2θ in °)',fields:[['Format','ASCII two-column','x = 2θ (°), y = intensity']],ranges:[r],header:[],warnings:[]};
+}
+
+/* Savitzky–Golay, quadratic, window w (odd) */
+function sgSmooth(y,w){
+  const n=y.length; w=Math.max(1,Math.floor(w)); if(w%2===0) w+=1;
+  if(w<5||n<w) return Float64Array.from(y);
+  const m=(w-1)/2, den=(2*m-1)*(2*m+1)*(2*m+3), c=new Float64Array(w);
+  for(let i=-m;i<=m;i++) c[i+m]=3*(3*m*m+3*m-1-5*i*i)/den;
+  const out=new Float64Array(n);
+  for(let j=0;j<n;j++){
+    let s=0;
+    for(let i=-m;i<=m;i++){ let k=j+i; if(k<0)k=-k; if(k>=n)k=2*n-2-k; if(k<0)k=0; if(k>=n)k=n-1; s+=c[i+m]*y[k]; }
+    out[j]=s;
+  }
+  return out;
+}
+/* SNIP background with LLS transform; M = half-width in points */
+function snip(y,M){
+  const n=y.length, v=new Float64Array(n), t=new Float64Array(n);
+  for(let i=0;i<n;i++) v[i]=Math.log(Math.log(Math.sqrt(Math.max(y[i],0)+1)+1)+1);
+  for(let p=1;p<=M;p++){
+    for(let i=0;i<n;i++){
+      if(i-p<0||i+p>=n){ t[i]=v[i]; continue; }
+      const a=0.5*(v[i-p]+v[i+p]); t[i]=a<v[i]?a:v[i];
+    }
+    v.set(t);
+  }
+  const out=new Float64Array(n);
+  for(let i=0;i<n;i++){ const s=Math.exp(Math.exp(v[i])-1)-1; out[i]=s*s-1; }
+  return out;
+}
+function tthToConv(t,lam){
+  const s=Math.sin(t*Math.PI/360);
+  return {d:lam/(2*s), invd:20*s/lam, q:4*Math.PI*s/lam};
+}
+function peakProps(tr, i, manual){
+  const {tth, y, sm, bg} = tr, n=tth.length;
+  const net=k=>sm[k]-bg[k];
+  let x=tth[i], ns=net(i), hs=sm[i];
+  if(i>0 && i<n-1){
+    const a=sm[i-1], b=sm[i], c=sm[i+1], den=a-2*b+c;
+    if(den<0){
+      const dl=0.5*(a-c)/den;
+      if(Math.abs(dl)<=1){
+        x = tth[i] + dl*(dl>=0 ? tth[i+1]-tth[i] : tth[i]-tth[i-1]);
+        hs = b - 0.25*(a-c)*dl;
+        const bgi = bg[i] + dl*(dl>=0 ? bg[i+1]-bg[i] : bg[i]-bg[i-1]);
+        ns = hs - bgi;
+      }
+    }
+  }
+  const half=ns/2;
+  let fwhm=null, xl=null, xr=null;
+  if(ns>0){
+    let j=i; while(j>0 && net(j)>half) j--;
+    if(net(j)<=half && j<i){ const a=net(j), b=net(j+1); xl = tth[j] + (half-a)/(b-a)*(tth[j+1]-tth[j]); }
+    let k=i; while(k<n-1 && net(k)>half) k++;
+    if(net(k)<=half && k>i){ const a=net(k-1), b=net(k); xr = tth[k-1] + (half-a)/(b-a)*(tth[k]-tth[k-1]); }
+    if(xl!==null && xr!==null) fwhm=xr-xl;
+  }
+  let area=null;
+  if(fwhm){
+    const lo=x-1.5*fwhm, hi=x+1.5*fwhm; area=0;
+    for(let k=0;k<n-1;k++){
+      if(tth[k+1]<lo||tth[k]>hi) continue;
+      area += 0.5*((y[k]-bg[k])+(y[k+1]-bg[k+1]))*(tth[k+1]-tth[k]);
+    }
+  }
+  const lam=tr.lamUse;
+  const cv=tthToConv(x,lam);
+  return {i, tth:x, d:cv.d, invd:cv.invd, q:cv.q, fwhm, raw:y[i], net:ns, smooth:hs, area, manual:!!manual};
+}
+function detectPeaks(tr, P){
+  const {tth, y}=tr, n=tth.length;
+  const step=Math.abs(tth[n-1]-tth[0])/(n-1);
+  tr.sm=sgSmooth(y,P.sg);
+  const M=Math.max(1,Math.round(P.bgw/(2*step)));
+  tr.bg=snip(tr.sm,M);
+  const net=new Float64Array(n); let maxNet=0;
+  for(let i=0;i<n;i++){ net[i]=tr.sm[i]-tr.bg[i]; if(net[i]>maxNet) maxNet=net[i]; }
+  tr.maxNet=maxNet;
+  const cand=[], prom={};
+  for(let i=1;i<n-1;i++){
+    if(!(net[i]>net[i-1] && net[i]>=net[i+1])) continue;
+    if(net[i] < P.rel/100*maxNet) continue;
+    /* topographic prominence on the smoothed net curve */
+    let mL=net[i], j=i-1; while(j>=0 && net[j]<=net[i]){ if(net[j]<mL) mL=net[j]; j--; }
+    let mR=net[i], k=i+1; while(k<n && net[k]<=net[i]){ if(net[k]<mR) mR=net[k]; k++; }
+    const pr=net[i]-Math.max(mL,mR);
+    const sig=Math.sqrt(Math.max(tr.bg[i],1));
+    if(pr < P.k*sig) continue;
+    prom[i]=pr; cand.push(i);
+  }
+  cand.sort((a,b)=>net[b]-net[a]);
+  const acc=[];
+  for(const i of cand){ if(acc.every(j=>Math.abs(tth[j]-tth[i])>=P.sep)) acc.push(i); }
+  acc.sort((a,b)=>a-b);
+  tr.peaks=acc.map(i=>{ const p=peakProps(tr,i,false); p.prom=prom[i]; return p; });
+}
+
+const WK={"H":[0.413048,0.294953,0.187491,0.080701,0.023736,15.5699,32.3985,5.7114,61.8899,1.33412,4.9e-05],"He":[0.732354,0.753896,0.283819,0.190003,0.039139,11.5539,4.59583,1.5463,26.464,0.377523,0.000487],"Li":[0.974637,0.158472,0.811855,0.262416,0.790108,4.33495,0.342451,97.103,201.364,1.40923,0.002542],"Be":[1.53371,0.638283,0.601052,0.106139,1.11841,42.6621,0.59542,99.1065,0.15134,1.84309,0.002511],"B":[2.08519,1.06458,1.06279,0.140515,0.641784,23.4941,1.13789,61.239,0.114886,0.399036,0.003823],"C":[2.65751,1.07808,1.49091,-4.24107,0.713791,14.7808,0.776775,42.0868,-0.000294,0.239535,4.297983],"N":[11.8938,3.27748,1.85809,0.858927,0.912985,0.000158,10.2327,30.3447,0.656065,0.217287,-11.8049],"O":[2.96043,2.50882,0.637853,0.722838,1.14276,14.1823,5.93686,0.112726,34.9585,0.39024,0.027014],"F":[3.51194,2.77224,0.678385,0.915159,1.08926,10.6879,4.38047,0.093982,27.2552,0.313066,0.032557],"Ne":[4.18375,2.90573,0.520513,1.13564,1.22806,8.17546,3.25254,0.063295,21.8139,0.224952,0.025576],"Na":[4.91013,3.08178,1.26207,1.09894,0.560991,3.28143,9.11918,0.102763,132.014,0.405878,0.079712],"Mg":[4.70897,1.19481,1.55816,1.17041,3.2394,4.87521,108.506,0.111516,48.2924,1.92817,0.126842],"Al":[4.7308,2.31395,1.54198,1.11756,3.15475,3.62893,43.0512,0.09596,108.932,1.55592,0.139509],"Si":[5.27533,3.19104,1.51151,1.35685,2.51911,2.63134,33.7307,0.081119,86.2886,1.17009,0.145073],"P":[1.95054,4.14693,1.49456,1.52204,5.72971,0.908139,27.045,0.07128,67.5202,1.98117,0.155233],"S":[6.37216,5.15457,1.47373,1.63507,1.20937,1.51435,22.0925,0.061373,55.4452,0.646925,0.154722],"Cl":[1.44607,6.87061,6.1518,1.75035,0.634168,0.052357,1.19317,18.3434,46.3984,0.401005,0.146773],"Ar":[7.188,6.63845,0.45418,1.92959,1.52365,0.956221,15.3399,15.3399,39.0438,0.062409,0.265954],"K":[8.16399,7.14694,1.07014,0.877316,1.48643,12.8163,0.808945,210.327,39.5977,0.052821,0.253614],"Ca":[8.59366,1.47732,1.43625,1.18284,7.11326,10.4606,0.041891,81.3904,169.848,0.688098,0.196255],"Sc":[1.47657,1.48728,1.60019,9.17746,7.09975,53.131,0.035325,137.319,9.09803,0.602102,0.157765],"Ti":[9.81852,1.52265,1.7031,1.76877,7.08256,8.00188,0.029763,39.8854,120.158,0.532405,0.102473],"V":[10.4736,1.54788,1.98638,1.86562,7.05625,7.08194,0.02604,31.9097,108.023,0.474882,0.067744],"Cr":[11.0071,1.55548,2.98529,1.34786,7.03478,6.36628,0.023987,23.2448,105.774,0.429369,0.06551],"Mn":[11.7095,1.73341,2.67314,2.02337,7.00318,5.59712,0.0178,21.7884,89.5179,0.383054,-0.147293],"Fe":[12.3111,1.87662,3.06618,2.07045,6.97518,5.00941,0.014461,18.743,82.7679,0.346506,-0.304931],"Co":[12.9145,2.48191,3.46689,2.10635,6.96089,4.50714,0.009126,16.4381,76.9873,0.314418,-0.936572],"Ni":[13.5219,6.94728,3.86603,2.1359,4.28473,4.07728,0.286763,14.6226,71.9661,0.004437,-2.762697],"Cu":[14.0142,4.78458,5.05681,1.45797,6.933,3.73828,0.003744,13.035,72.5548,0.265666,-3.254477],"Zn":[14.741,6.90775,4.64234,2.19177,38.424,3.38823,0.243315,11.9037,63.3121,0.000397,-36.91583],"Ga":[15.7589,6.84112,4.12102,2.71468,2.39525,3.12175,0.226057,12.4822,66.2036,0.007238,-0.847395],"Ge":[16.5406,1.5679,3.72783,3.3451,6.78508,2.86662,0.012198,13.4322,58.866,0.210974,0.018726],"As":[17.0256,4.50344,3.7159,3.9372,6.79017,2.59774,0.003012,14.2721,50.438,0.193015,-2.984117],"Se":[17.3541,4.65325,4.25949,4.13645,6.74916,2.34979,0.00255,15.5795,45.1812,0.177432,-3.160982],"Br":[17.5506,5.41188,3.93718,3.88064,6.70779,2.11923,16.5572,0.002481,42.164,0.162121,-2.492088],"Kr":[17.6553,6.84811,4.171,3.44676,6.6852,1.90823,16.6062,0.001598,39.9175,0.146896,-2.810592],"Rb":[8.12313,2.13804,6.7617,1.15605,17.6795,15.1424,33.5427,0.129372,224.133,1.71337,1.139548],"Sr":[17.7302,9.79587,6.09976,2.62003,0.600053,1.56306,14.3109,0.120574,135.771,0.120574,1.140251],"Y":[17.792,10.2533,5.71495,3.17052,0.918251,1.42969,13.1328,0.112173,108.197,0.112173,1.131787],"Zr":[17.8598,10.911,5.82111,3.51251,0.746965,1.31069,12.3193,0.104353,91.7775,0.104353,1.124859],"Nb":[17.9584,12.0631,5.00701,3.28767,1.53102,1.21159,12.2467,0.098615,75.0119,0.098615,1.123452],"Mo":[6.23622,17.9877,12.9731,3.45143,0.210899,0.09078,1.10831,11.4687,66.6842,0.09078,1.10877],"Tc":[17.841,3.42824,1.37301,12.9474,6.33547,1.00573,41.9014,119.321,9.78154,0.083391,1.074784],"Ru":[6.27162,17.9067,14.1233,3.74601,0.908235,0.07704,0.928222,9.55535,35.8607,123.552,1.043992],"Rh":[6.21665,17.9197,3.85425,0.840326,15.1735,0.070789,0.856121,33.8895,121.687,9.02952,0.995452],"Pd":[6.12151,4.78406,16.6317,4.31826,13.2468,0.062549,0.784031,8.75139,34.49,0.784031,0.883099],"Ag":[6.07387,17.1554,4.17334,0.852238,17.9887,0.055333,7.89651,28.4437,110.376,0.716809,0.756603],"Cd":[6.08099,18.0195,4.0182,1.30351,17.9747,0.04899,7.27365,29.1193,95.8312,0.661231,0.603504],"In":[6.19648,18.8162,4.05048,1.63893,17.9629,0.042072,6.69566,31.0098,103.284,0.610714,0.333097],"Sn":[19.3252,6.28157,4.49887,1.85693,17.9173,6.1181,0.036915,32.529,95.0372,0.565651,0.119024],"Sb":[5.39496,6.54957,19.6507,1.82782,17.8678,33.3265,0.030974,5.56493,87.131,0.523992,-0.290506],"Te":[6.6603,6.94076,19.847,1.55717,17.8024,33.0317,0.02575,5.06555,84.1016,0.48766,-0.806668],"I":[19.8845,6.73659,8.11052,1.17095,17.5487,4.62859,0.027754,31.8491,84.4064,0.46355,-0.448811],"Xe":[19.9789,11.7749,9.33218,1.24475,17.7375,4.14336,0.010142,28.7962,75.2807,0.413616,-6.065902],"Cs":[17.4187,8.31444,10.3232,1.38383,19.8763,0.399828,0.016872,25.6058,233.34,3.82692,-2.322802],"Ba":[19.7473,17.3685,10.4657,2.5926,11.0037,3.48182,0.371224,21.2266,173.834,0.010719,-5.183497],"La":[19.966,27.3297,11.0184,3.0867,17.3355,3.19741,0.003446,19.9555,141.382,0.341817,-21.74549],"Ce":[17.3551,43.9885,20.5466,3.13067,11.3537,0.328369,0.002047,3.0882,134.908,18.833,-38.38602],"Pr":[21.5513,17.1617,11.9039,2.6791,9.5642,2.99567,0.312491,17.7167,152.193,0.010468,-3.871068],"Nd":[17.3312,62.7839,12.1601,2.66348,22.24,0.300269,0.00132,17.026,148.749,2.91027,-57.18984],"Pm":[17.2864,51.5602,12.4786,2.67551,22.9609,0.28662,0.00155,16.2238,143.985,2.79648,-45.97368],"Sm":[23.7004,23.0722,12.7778,2.68422,17.2044,2.68954,0.003491,15.4954,139.862,0.274536,-17.45217],"Eu":[17.1862,37.1568,13.1034,2.70725,24.4193,0.261678,0.001995,14.7874,134.816,2.58188,-31.58669],"Gd":[24.8981,17.105,13.2226,3.26615,48.9952,2.43503,0.246961,13.9963,110.863,0.001383,-43.50568],"Tb":[25.91,32.3441,13.7651,2.7514,17.0644,2.37391,0.002034,13.482,125.837,0.236916,-26.85197],"Dy":[26.6718,88.6876,14.0654,2.7685,17.0678,2.28259,0.000665,12.9202,121.937,0.225531,-83.27983],"Ho":[27.1502,16.9998,14.0593,3.38698,46.5465,2.16966,0.215414,12.2131,100.507,0.001211,-41.16525],"Er":[28.1749,82.4933,14.624,2.80276,17.0185,2.121,0.00064,11.9153,114.53,0.207519,-77.13522],"Tm":[28.9259,76.1738,14.9047,2.81481,16.9981,2.0462,0.000656,11.4654,111.412,0.199376,-70.83981],"Yb":[29.6768,65.6241,15.1609,2.83029,16.9978,1.97763,0.00072,11.0446,108.139,0.19211,-60.31381],"Lu":[30.1229,15.0993,56.3149,3.54098,16.9437,1.88309,10.3428,0.00078,89.5593,0.183849,-51.04942],"Hf":[30.617,15.1454,54.9335,4.09625,16.8962,1.79561,9.93447,0.000739,76.1897,0.175914,-49.71984],"Ta":[31.0664,15.3418,49.2783,4.57766,16.8283,1.70873,9.61846,0.00076,66.3462,0.168002,-44.11903],"W":[31.5079,15.6825,37.9601,4.88551,16.7921,1.62949,9.44645,0.000898,59.9807,0.160798,-32.86457],"Re":[31.8885,16.1171,42.3903,5.21167,16.7676,1.54924,9.23347,0.000689,54.5164,0.152815,-37.41268],"Os":[32.2103,16.6784,48.5599,5.45584,16.7355,1.47353,9.04969,0.000519,50.2102,0.145771,-43.67796],"Ir":[32.0044,1.97545,17.0701,15.9395,5.99,1.35377,81.0142,0.128093,7.6612,26.6594,4.018893],"Pt":[31.2739,18.4454,17.0637,5.55593,1.57527,1.31699,8.79715,0.124741,40.178,1.317,4.050394],"Au":[16.7774,19.3172,32.9797,5.59545,10.5769,0.122737,8.62157,1.2569,38.0088,0.000601,-6.279078],"Hg":[16.8399,20.0238,28.4286,5.88156,4.71471,0.115905,8.25693,1.19525,39.2472,1.19525,4.076478],"Tl":[16.6308,19.3866,32.8086,1.74719,6.35686,0.110704,7.1814,1.11973,90.6603,26.015,4.066939],"Pb":[16.4196,32.7386,6.53025,2.34274,19.9165,0.105499,1.05505,25.0259,80.9066,6.66445,4.049824],"Bi":[16.2823,32.7251,6.6783,2.69475,20.5766,0.10118,1.00229,25.7141,77.0575,6.29188,4.040914],"Po":[16.2892,32.8072,21.0952,2.5059,7.25459,0.098121,0.966265,6.04662,76.5981,28.0961,4.046556],"At":[16.0115,32.6155,8.1139,2.88408,21.3779,0.092639,0.904416,26.5433,68.373,5.49951,3.995684],"Rn":[16.0702,32.6411,21.4897,2.29922,9.48018,0.090437,0.876409,5.23969,69.1885,27.6326,4.020977],"Fr":[16.0074,32.6638,21.5944,1.5985,11.1212,0.087031,0.840187,4.95447,199.806,26.9051,4.003472],"Ra":[32.5637,21.3967,11.2981,2.83469,15.915,0.80198,4.59067,22.759,160.404,0.083544,3.981773],"Ac":[15.9141,32.535,21.554,11.4334,3.61241,0.080511,0.770669,4.35221,21.3816,130.501,3.939212],"Th":[15.784,32.4549,21.8492,4.23908,11.7362,0.077067,0.735137,4.09798,109.464,20.5121,3.922533],"Pa":[32.7402,21.9737,12.9574,3.68383,15.7441,0.709545,4.05088,19.2315,117.255,0.07404,3.886066],"U":[15.6793,32.8243,13.6605,3.68726,22.2794,0.071206,0.681177,18.2362,112.5,3.93032,3.854444],"Np":[32.9999,22.6381,14.22,3.67295,15.6832,0.657086,3.85492,17.4355,109.464,0.068033,3.769391],"Pu":[33.2812,23.1485,15.1538,3.03149,15.7042,0.634999,3.85617,16.8497,121.292,0.064857,3.6642],"Am":[33.4352,23.6573,15.5763,3.02702,15.7461,0.612785,3.79294,16.1958,117.757,0.061755,3.54116],"Cm":[15.8048,33.4808,24.1502,3.65556,15.4999,0.058619,0.59016,3.67472,100.736,15.4083,3.39084],"Bk":[15.8891,33.6253,24.7104,3.70714,15.8393,0.055503,0.569571,3.61547,97.6948,14.7543,3.213169],"Cf":[33.7941,25.4677,16.0485,3.65753,16.009,0.550447,3.58197,14.3574,96.065,0.05245,3.005326]};
+</script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=(v,d)=>(v==null||!isFinite(v))?"–":v.toFixed(d);
+function fmtG(v){if(v==null||!isFinite(v))return "–";const a=Math.abs(v);if(a!==0&&(a>=1e6||a<1e-3))return v.toExponential(4);return String(+v.toPrecision(10));}
+const nstr=v=>(v==null||!isFinite(v))?"":String(v);
+const baseName=n=>String(n).replace(/\.[^.]+$/,"");
+const SUB="₀₁₂₃₄₅₆₇₈₉";
+function compactFormula(f){return String(f).trim().split(/\s+/).map(t=>{const m=t.match(/^([A-Z][a-z]?)([\d.]*)$/);if(!m)return t;const n=m[2];
+  if(!n||n==="1")return m[1];return m[1]+(/^\d+$/.test(n)?[...n].map(c=>SUB[+c]).join(""):n);}).join("");}
+function hms(sec){const t=Math.round(sec),h=Math.floor(t/3600),m=Math.floor(t%3600/60),x=t%60;return h+":"+String(m).padStart(2,"0")+":"+String(x).padStart(2,"0");}
+function download(name,data,type){const a=document.createElement("a");a.href=URL.createObjectURL(data instanceof Blob?data:new Blob([data],{type:type||"text/plain"}));
+  a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);}
+function setStatus(t,err){const s=$("status");s.textContent=t||"";s.classList.toggle("err",!!err);}
+
+/* ============================================================== state */
+const TRACE_COLORS=["#2a6fdb","#d1495b","#00a19a","#e08a00","#7b5ea7","#3d405b","#6a994e","#c2185b","#00798c","#b5651d"];
+const S={traces:[],active:-1,view:null,selPeak:-1,phases:[],focus:null,focusBox:null,collapsed:new Set(),bestIdx:-1};
+let nextColor=0,uid=0,phaseSeq=0;
+
+/* ============================================================== remembered settings */
+const SETK="bragg-studio-settings";
+const SET_IDS=["xmode","ymode","norm","offset","lam","lamFile","pSg","pBg","pK","pRel","pSep","showBg","showSm","showPk","pkAll","pkLines",
+  "stH","stFull","cLab","cLabD","cLabSize","ka2","mTol","pb","pbCol","fs","lw","cmin","expAll"];
+const SET_DEF={};
+for(const id of SET_IDS){const e=$(id);SET_DEF[id]=e.type==="checkbox"?e.checked:e.value;}
+function setLoad(){let o={};try{o=JSON.parse(localStorage.getItem(SETK)||"{}")||{};}catch(e){}
+  for(const id of SET_IDS){if(!(id in o))continue;const e=$(id);if(e.type==="checkbox")e.checked=!!o[id];else e.value=o[id];}}
+function setSave(){const o={};for(const id of SET_IDS){const e=$(id);o[id]=e.type==="checkbox"?e.checked:e.value;}try{localStorage.setItem(SETK,JSON.stringify(o));}catch(e){}}
+setLoad();
+for(const id of SET_IDS)$(id).addEventListener("change",setSave);
+$("setReset").addEventListener("click",()=>{for(const id of SET_IDS){const e=$(id);if(e.type==="checkbox")e.checked=SET_DEF[id];else e.value=SET_DEF[id];}
+  setSave();readP();for(const tr of S.traces){tr.lamUse=traceLam(tr);detectPeaks(tr,P);}uiSync();S.view=null;refreshAll();});
+
+/* ============================================================== theme (same scheme and storage as d-Spacing Studio) */
+const THEME_DEF={mode:"light",acc:"#4a40ce",bg:"#ffffff",panel:"#ffffff",ink:""};
+const THEME=(()=>{try{return Object.assign({},THEME_DEF,JSON.parse(localStorage.getItem("page-theme")||"{}"));}catch(e){return Object.assign({},THEME_DEF);}})();
+function hexMix(a,b,t){const p=h=>[0,2,4].map(i=>parseInt(h.replace("#","").substr(i,2),16));const A=p(a),B=p(b);return "#"+A.map((v,i)=>Math.round(v*t+B[i]*(1-t)).toString(16).padStart(2,"0")).join("");}
+function themeApply(){const r=document.documentElement;
+  for(const v of ["--bg","--panel","--ink","--muted","--line","--accent","--accent-ink"])r.style.removeProperty(v);
+  if(THEME.mode==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",THEME.mode);
+  if(THEME.acc){const h=THEME.acc.replace("#",""),v=[0,2,4].map(i=>parseInt(h.substr(i,2),16)/255).map(c=>c<=.03928?c/12.92:((c+.055)/1.055)**2.4),L=.2126*v[0]+.7152*v[1]+.0722*v[2];
+    r.style.setProperty("--accent",THEME.acc);r.style.setProperty("--accent-ink",L>.35?"#04161a":"#ffffff");}
+  const cs=getComputedStyle(r),g=v=>cs.getPropertyValue(v).trim();
+  const bg=THEME.bg||"",pn=THEME.panel||"",ik=THEME.ink||"";
+  if(bg)r.style.setProperty("--bg",bg);if(pn)r.style.setProperty("--panel",pn);if(ik)r.style.setProperty("--ink",ik);
+  if(pn||ik){const Pc=pn||g("--panel"),I=ik||g("--ink");if(/^#[0-9a-f]{6}$/i.test(Pc)&&/^#[0-9a-f]{6}$/i.test(I)){r.style.setProperty("--muted",hexMix(I,Pc,.62));r.style.setProperty("--line",hexMix(I,Pc,.17));}}
+  const c2=getComputedStyle(r);
+  $("thMode").value=THEME.mode;$("thAcc").value=THEME.acc||c2.getPropertyValue("--accent").trim()||"#0b7f94";
+  $("thBg").value=bg||toHex(c2.getPropertyValue("--bg").trim());$("thPanel").value=pn||toHex(c2.getPropertyValue("--panel").trim());$("thInk").value=ik||toHex(c2.getPropertyValue("--ink").trim());
+  try{localStorage.setItem("page-theme",JSON.stringify(THEME));}catch(e){}
+  setTimeout(()=>{try{draw();}catch(e){}},30);}
+function toHex(c){if(/^#[0-9a-f]{6}$/i.test(c))return c;const m=c.match(/\d+/g);return m&&m.length>=3?"#"+m.slice(0,3).map(v=>(+v).toString(16).padStart(2,"0")).join(""):"#000000";}
+$("thMode").addEventListener("change",()=>{THEME.mode=$("thMode").value;themeApply();});
+$("thAcc").addEventListener("input",()=>{THEME.acc=$("thAcc").value;themeApply();});
+for(const [id,key] of [["thBg","bg"],["thPanel","panel"],["thInk","ink"]])$(id).addEventListener("input",()=>{THEME[key]=$(id).value;themeApply();});
+$("thReset").addEventListener("click",()=>{Object.assign(THEME,THEME_DEF);themeApply();thPresetUI("");});
+const TH_PRESETS=[["Default (indigo)",{mode:"light",acc:"#4a40ce",bg:"#ffffff",panel:"#ffffff",ink:""}],["Classic teal",{mode:"light",acc:"#0b7f94",bg:"#eceff2",panel:"#ffffff",ink:""}],
+  ["Paper",{mode:"light",acc:"#b5452b",bg:"#f4f1ea",panel:"#fffdf8",ink:"#2b2118"}],["Solar light",{mode:"light",acc:"#268bd2",bg:"#fdf6e3",panel:"#fffbef",ink:"#33434c"}],
+  ["High contrast",{mode:"light",acc:"#0033cc",bg:"#ffffff",panel:"#ffffff",ink:"#000000"}],["Midnight",{mode:"dark",acc:"#36c0d6",bg:"#0e1317",panel:"#161d23",ink:""}],
+  ["Nord",{mode:"dark",acc:"#88c0d0",bg:"#2e3440",panel:"#3b4252",ink:"#eceff4"}],["Graphite amber",{mode:"dark",acc:"#f2a93b",bg:"#18191c",panel:"#232529",ink:"#e8e6e3"}]];
+function thSavedGet(){try{return JSON.parse(localStorage.getItem("theme-saved")||"{}")||{};}catch(e){return {};}}
+function thSavedPut(o){try{localStorage.setItem("theme-saved",JSON.stringify(o));}catch(e){}}
+function thPresetUI(sel){const s=$("thPreset");s.textContent="";const o0=document.createElement("option");o0.value="";o0.textContent="themes…";s.appendChild(o0);
+  const g1=document.createElement("optgroup");g1.label="Presets";TH_PRESETS.forEach(([n],i)=>{const o=document.createElement("option");o.value="p:"+i;o.textContent=n;g1.appendChild(o);});s.appendChild(g1);
+  const sv=thSavedGet(),names=Object.keys(sv).sort();if(names.length){const g2=document.createElement("optgroup");g2.label="Your themes";for(const n of names){const o=document.createElement("option");o.value="s:"+n;o.textContent=n;g2.appendChild(o);}s.appendChild(g2);}
+  s.value=sel||"";$("thDel").disabled=!(s.value.startsWith("s:"));}
+function thUse(t){Object.assign(THEME,{mode:t.mode||"light",acc:t.acc||"",bg:t.bg||"",panel:t.panel||"",ink:t.ink||""});themeApply();}
+$("thPreset").addEventListener("change",()=>{const v=$("thPreset").value;$("thDel").disabled=!v.startsWith("s:");if(v.startsWith("p:"))thUse(TH_PRESETS[+v.slice(2)][1]);else if(v.startsWith("s:")){const t=thSavedGet()[v.slice(2)];if(t)thUse(t);}});
+$("thSave").addEventListener("click",()=>{const cur=$("thPreset").value,def=cur.startsWith("s:")?cur.slice(2):"My theme";const n=(prompt("Name for this theme:",def)||"").trim();if(!n)return;
+  const sv=thSavedGet();sv[n]={mode:THEME.mode,acc:THEME.acc||$("thAcc").value,bg:THEME.bg||$("thBg").value,panel:THEME.panel||$("thPanel").value,ink:THEME.ink||""};thSavedPut(sv);thPresetUI("s:"+n);});
+$("thDel").addEventListener("click",()=>{const v=$("thPreset").value;if(!v.startsWith("s:"))return;if(!confirm(`Delete the saved theme “${v.slice(2)}”?`))return;const sv=thSavedGet();delete sv[v.slice(2)];thSavedPut(sv);thPresetUI("");});
+window.addEventListener("storage",e=>{if(e.key==="theme-saved")thPresetUI($("thPreset").value);if(e.key==="page-theme"){try{Object.assign(THEME,JSON.parse(e.newValue||"{}"));themeApply();}catch(err){}}});
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(THEME.mode==="auto")themeApply();});
+thPresetUI("");themeApply();
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* ============================================================== peak parameters */
+let P={sg:11,bgw:2,k:3,rel:2,sep:0.2};
+function readP(){P={sg:Math.max(1,+$("pSg").value||1),bgw:Math.max(0.01,+$("pBg").value||2),k:Math.max(0,+$("pK").value||0),rel:Math.max(0,+$("pRel").value||0),sep:Math.max(0,+$("pSep").value||0)};}
+readP();
+function traceLam(tr){return ($("lamFile").checked&&tr.fileMeta.lambda1)?tr.fileMeta.lambda1:(+$("lam").value||1.540598);}
+const activeTr=()=>S.traces[S.active]||null;
+function lamNow(){const t=activeTr();return t?t.lamUse:(+$("lam").value||1.540598);}
+function lam2Now(){const t=activeTr();return t&&$("lamFile").checked&&t.fileMeta.lambda2?t.fileMeta.lambda2:null;}
+
+/* ============================================================== loading data */
+function welcomeHide(){}
+async function loadFiles(list){
+  const errs=[];
+  for(const f of list){
+    if(/\.(html?|png|jpe?g|gif|bmp|tiff?|svg|pdf|docx?|xlsx?|pptx?|zip|exe|dm3|dm4)$/i.test(f.name)){errs.push(f.name+": skipped — not a diffraction data file.");continue;}
+    try{
+      const buf=await f.arrayBuffer(),u8=new Uint8Array(buf),head=readStr(u8,0,8);let meta;
+      if(/^RAW_\d/.test(head))meta=parseStoeRaw(buf,f.name);
+      else if(/^RAW[0-9 ]/.test(head))throw new Error('Bruker RAW ("'+head.trim()+'") is not decoded here; export it as .xy.');
+      else meta=parseTextXY(new TextDecoder().decode(u8),f.name);
+      meta.id=++uid;
+      const multi=meta.ranges.length>1;
+      for(const r of meta.ranges){
+        const tr={id:++uid,fileMeta:meta,range:r,tth:r.tth,y:r.y,label:baseName(f.name)+(multi?" · R"+r.index:""),
+          color:TRACE_COLORS[(nextColor++)%TRACE_COLORS.length],visible:!r.dupOf,peaks:[]};
+        tr.lamUse=traceLam(tr);detectPeaks(tr,P);S.traces.push(tr);
+        if(S.active<0||(activeTr()&&!activeTr().visible&&tr.visible))S.active=S.traces.length-1;}
+      welcomeHide();
+    }catch(e){errs.push(f.name+": "+e.message);console.error(e);}
+  }
+  $("errors").innerHTML=errs.map(e=>'<div class="err">'+esc(e)+"</div>").join("");
+  S.view=null;S.selPeak=-1;refreshAll();
+}
+
+/* ============================================================== CIF: parse, expand symmetry, X-ray powder lines */
+function cifTokens(text){
+  const out=[];const lines=text.replace(/\r/g,"").split("\n");
+  for(let li=0;li<lines.length;li++){let L=lines[li];
+    if(L.startsWith(";")){let buf=L.slice(1);while(++li<lines.length&&!lines[li].startsWith(";"))buf+="\n"+lines[li];out.push({v:buf.trim(),q:true});continue;}
+    let i=0;while(i<L.length){const c=L[i];
+      if(c===" "||c==="\t"){i++;continue;}
+      if(c==="#")break;
+      if(c==="'"||c==='"'){let j=i+1;while(j<L.length&&!(L[j]===c&&(j+1===L.length||/\s/.test(L[j+1]))))j++;out.push({v:L.slice(i+1,j),q:true});i=j+1;continue;}
+      let j=i;while(j<L.length&&!/\s/.test(L[j]))j++;out.push({v:L.slice(i,j),q:false});i=j;}}
+  return out;}
+function cifBlocks(text){
+  const tk=cifTokens(text),blocks=[];let cur=null;
+  for(let i=0;i<tk.length;){const t=tk[i];const v=t.v,lv=v.toLowerCase();
+    if(!t.q&&lv.startsWith("data_")){cur={name:v.slice(5),tags:{},loops:[]};blocks.push(cur);i++;continue;}
+    if(!cur){cur={name:"",tags:{},loops:[]};blocks.push(cur);}
+    if(!t.q&&lv==="loop_"){i++;const names=[];while(i<tk.length&&!tk[i].q&&tk[i].v.startsWith("_")){names.push(tk[i].v.toLowerCase());i++;}
+      const rows=[];let row=[];
+      while(i<tk.length){const u=tk[i];if(!u.q&&(u.v.startsWith("_")||/^(loop_|data_)/i.test(u.v)))break;row.push(u.v);if(row.length===names.length){rows.push(row);row=[];}i++;}
+      cur.loops.push({names,rows});continue;}
+    if(!t.q&&v.startsWith("_")){const val=i+1<tk.length?tk[i+1].v:"";cur.tags[lv]=val;i+=2;continue;}
+    i++;}
+  return blocks;}
+const cnum=v=>{const t=String(v==null?"":v).trim().replace(/\(\d+\)$/,"");const m=t.match(/^([+-]?\d+(?:\.\d*)?)\/(\d+(?:\.\d*)?)$/);if(m){const q=+m[1]/+m[2];return isFinite(q)?q:NaN;}const x=parseFloat(t);return isFinite(x)?x:NaN;};
+function parseOp(str){const parts=str.toLowerCase().replace(/\s/g,"").split(",");if(parts.length!==3)return null;
+  const R=[[0,0,0],[0,0,0],[0,0,0]],t=[0,0,0];
+  const val=s=>{if(s===""||s==="+")return 1;if(s==="-")return -1;if(s.includes("/")){const [a,b]=s.split("/");return cnum(a)/cnum(b);}return cnum(s);};
+  for(let r=0;r<3;r++){for(let term of parts[r].replace(/-/g,"+-").split("+")){if(!term)continue;term=term.replace("*","");
+      const m=term.match(/[xyz]/);if(m){const c=val(term.replace(/[xyz]/,""));if(!isFinite(c))return null;R[r]["xyz".indexOf(m[0])]+=c;}else{const c=val(term);if(!isFinite(c))return null;t[r]+=c;}}}
+  return {R,t};}
+function elementOf(sym,label){const cand=[sym,label].filter(Boolean);
+  for(let s0 of cand){const m=String(s0).match(/^([A-Za-z]{1,2})/);if(!m)continue;let s=m[1];s=s[0].toUpperCase()+s.slice(1).toLowerCase();
+    if(s==="D"||s==="T")return "H";
+    if(WK[s])return s;if(WK[s[0]])return s[0];}
+  return null;}
+function phaseFromBlock(b,fileName){
+  const T=b.tags,g=k=>T[k];
+  const a=cnum(g("_cell_length_a")),bb=cnum(g("_cell_length_b")),c=cnum(g("_cell_length_c"));
+  const al=cnum(g("_cell_angle_alpha"))||90,be=cnum(g("_cell_angle_beta"))||90,ga=cnum(g("_cell_angle_gamma"))||90;
+  if(!(a>0&&bb>0&&c>0))return null;
+  const loopWith=n=>b.loops.find(L=>L.names.includes(n));
+  let ops=[];const opNames=["_symmetry_equiv_pos_as_xyz","_space_group_symop_operation_xyz","_space_group_symop.operation_xyz"];
+  for(const n of opNames){const L=loopWith(n);if(L){const k=L.names.indexOf(n);ops=L.rows.map(r=>parseOp(r[k])).filter(Boolean);break;}}
+  let warn="";if(!ops.length){ops=[parseOp("x,y,z")];warn="no symmetry operators in the file: treated as P1, so extinctions and intensities are wrong";}
+  const AL=loopWith("_atom_site_fract_x");if(!AL)return null;
+  const ix=n=>AL.names.indexOf(n);
+  const iL=ix("_atom_site_label"),iT=ix("_atom_site_type_symbol"),iX=ix("_atom_site_fract_x"),iY=ix("_atom_site_fract_y"),iZ=ix("_atom_site_fract_z"),
+        iO=ix("_atom_site_occupancy"),iU=ix("_atom_site_u_iso_or_equiv"),iB=ix("_atom_site_b_iso_or_equiv");
+  const atoms=[];const unknown=new Set();let noB=0;
+  for(const r of AL.rows){const el=elementOf(iT>=0?r[iT]:null,iL>=0?r[iL]:null);if(!el){unknown.add(iT>=0?r[iT]:r[iL]);continue;}
+    let B=0,hasB=false;if(iB>=0&&isFinite(cnum(r[iB]))&&cnum(r[iB])>0){B=cnum(r[iB]);hasB=true;}else if(iU>=0&&isFinite(cnum(r[iU]))&&cnum(r[iU])>0){B=8*Math.PI*Math.PI*cnum(r[iU]);hasB=true;}
+    if(!hasB)noB++;
+    const occ=iO>=0&&isFinite(cnum(r[iO]))?cnum(r[iO]):1;
+    const f=[cnum(r[iX]),cnum(r[iY]),cnum(r[iZ])];if(f.some(v=>!isFinite(v)))continue;
+    const seen=[];for(const op of ops){const p=[0,1,2].map(i=>{let v=op.R[i][0]*f[0]+op.R[i][1]*f[1]+op.R[i][2]*f[2]+op.t[i];v-=Math.floor(v);if(v>0.99999)v=0;return v;});
+      if(seen.some(q=>q.every((v,i)=>{const d=Math.abs(v-p[i]);return Math.min(d,1-d)<1e-3;})))continue;seen.push(p);atoms.push({el,x:p[0],y:p[1],z:p[2],occ,B});}}
+  if(!atoms.length)return null;
+  if(unknown.size)warn=(warn?warn+"; ":"")+"skipped unknown atom types: "+[...unknown].join(", ");
+  if(noB)warn=(warn?warn+"; ":"")+noB+" site(s) without B/U: B = 0 used";
+  const sg=(g("_space_group_name_h-m_alt")||g("_symmetry_space_group_name_h-m")||"").trim(),sgn=parseInt(g("_space_group_it_number")||g("_symmetry_int_tables_number")||"",10)||0;
+  const formula=(g("_chemical_formula_sum")||g("_chemical_formula_structural")||"").replace(/\s+/g," ").trim();
+  const mineral=(g("_chemical_name_mineral")||"").trim();
+  const code=g("_database_code_icsd")||g("_cod_database_code")||"";
+  return {cell:[a,bb,c,al,be,ga],atoms,sg,sgn,formula,mineral,code,file:fileName,block:b.name,warn};}
+/* reflections down to dmin; lines = groups of equal d with Σ|F|² (= m|F|² for equivalents) */
+function simulateX(ph,dmin){
+  const [a,b,c,al,be,ga]=ph.cell,ra=Math.PI/180,ca=Math.cos(al*ra),cb=Math.cos(be*ra),cg=Math.cos(ga*ra);
+  const G=[[a*a,a*b*cg,a*c*cb],[a*b*cg,b*b,b*c*ca],[a*c*cb,b*c*ca,c*c]];
+  const det=G[0][0]*(G[1][1]*G[2][2]-G[1][2]*G[2][1])-G[0][1]*(G[1][0]*G[2][2]-G[1][2]*G[2][0])+G[0][2]*(G[1][0]*G[2][1]-G[1][1]*G[2][0]);
+  const inv=[[ (G[1][1]*G[2][2]-G[1][2]*G[2][1])/det, -(G[0][1]*G[2][2]-G[0][2]*G[2][1])/det, (G[0][1]*G[1][2]-G[0][2]*G[1][1])/det],
+             [-(G[1][0]*G[2][2]-G[1][2]*G[2][0])/det, (G[0][0]*G[2][2]-G[0][2]*G[2][0])/det, -(G[0][0]*G[1][2]-G[0][2]*G[1][0])/det],
+             [ (G[1][0]*G[2][1]-G[1][1]*G[2][0])/det, -(G[0][0]*G[2][1]-G[0][1]*G[2][0])/det, (G[0][0]*G[1][1]-G[0][1]*G[1][0])/det]];
+  const hm=Math.ceil(a/dmin),km=Math.ceil(b/dmin),lm=Math.ceil(c/dmin);
+  const n=ph.atoms.length,AX=new Float64Array(n),AY=new Float64Array(n),AZ=new Float64Array(n),GI=new Int32Array(n);
+  const GK=new Map(),GA=[],GO=[],GB=[];
+  ph.atoms.forEach((t,i)=>{AX[i]=t.x;AY[i]=t.y;AZ[i]=t.z;const key=t.el+"|"+t.occ+"|"+t.B;let g=GK.get(key);if(g==null){g=GA.length;GK.set(key,g);GA.push(WK[t.el]);GO.push(t.occ);GB.push(t.B);}GI[i]=g;});
+  const ng=GA.length,FG=new Float64Array(ng),NK=2*km+1,NL=2*lm+1,F2S=new Float64Array((2*hm+1)*NK*NL).fill(-1),ix=(h,k,l)=>((h+hm)*NK+(k+km))*NL+(l+lm);
+  const refl=[],qmax=1/(dmin*dmin);
+  for(let h=-hm;h<=hm;h++)for(let k=-km;k<=km;k++)for(let l=-lm;l<=lm;l++){if(!h&&!k&&!l)continue;
+    const q2=h*h*inv[0][0]+k*k*inv[1][1]+l*l*inv[2][2]+2*(h*k*inv[0][1]+h*l*inv[0][2]+k*l*inv[1][2]);if(q2>qmax)continue;
+    let F2=F2S[ix(h,k,l)];
+    if(F2<0){const s2=q2/4;let re=0,im=0;   /* s = sinθ/λ = 1/(2d) */
+      for(let g=0;g<ng;g++){const A=GA[g];FG[g]=(A[0]*Math.exp(-A[5]*s2)+A[1]*Math.exp(-A[6]*s2)+A[2]*Math.exp(-A[7]*s2)+A[3]*Math.exp(-A[8]*s2)+A[4]*Math.exp(-A[9]*s2)+A[10])*GO[g]*Math.exp(-GB[g]*s2);}
+      for(let i=0;i<n;i++){const f=FG[GI[i]];const p2=2*Math.PI*(h*AX[i]+k*AY[i]+l*AZ[i]);re+=f*Math.cos(p2);im+=f*Math.sin(p2);}
+      F2=re*re+im*im;F2S[ix(-h,-k,-l)]=F2;}
+    refl.push({d:1/Math.sqrt(q2),F2,h,k,l});}
+  refl.sort((x,y)=>y.d-x.d);let Fmax=0;for(const r of refl)if(r.F2>Fmax)Fmax=r.F2;
+  const lines=[];
+  const nn=x=>x.h>=0&&x.k>=0&&x.l>=0,better=(r,b)=>nn(r)&&(!nn(b)||r.h+r.k+r.l>b.h+b.k+b.l||(r.h+r.k+r.l===b.h+b.k+b.l&&(r.h>b.h||(r.h===b.h&&r.k>b.k))));
+  for(let i=0;i<refl.length;){let j=i;while(j+1<refl.length&&Math.abs(refl[j+1].d-refl[i].d)<1e-5*refl[i].d)j++;
+    let sum=0,best=null,m=0;for(let t=i;t<=j;t++){const r=refl[t];if(r.F2<=1e-6*Fmax)continue;sum+=r.F2;m++;if(!best||better(r,best))best=r;}
+    if(best)lines.push({d:refl[i].d,F2:sum,m,hkl:`${best.h} ${best.k} ${best.l}`});
+    i=j+1;}
+  return lines;}
+/* lines at wavelength lam with scale s and zero shift z: 2θ, LP-weighted intensity normalised to the strongest (=100) */
+function phCalc(ph,lam){
+  const s=phS(ph),z=+$("z0").value||0,key=lam+"|"+s+"|"+z;
+  if(ph._calc&&ph._calc.key===key)return ph._calc.L;
+  const L=[];let mx=0;
+  for(const ln of ph.lines){const d=ln.d*s,sn=lam/(2*d);if(sn>=1)continue;
+    const th=Math.asin(sn),c2=Math.cos(2*th),lp=(1+c2*c2)/(sn*sn*Math.cos(th));
+    const I=ln.F2*lp;if(I>mx)mx=I;L.push({ln,d,tth:2*th*180/Math.PI+z,Iabs:I});}
+  for(const x of L)x.I=mx>0?100*x.Iabs/mx:0;
+  ph._calc={key,L};return L;}
+const phVisible=ph=>ph.show||ph.id===S.focus;
+const cminV=()=>Math.max(0,+$("cmin").value||0);
+/* per-CIF calibration factor s and lines ≥ % I (set in ★ CIF settings for starred phases); blank = global; remembered per CIF file */
+let PHSO={},PHMI={};try{PHSO=JSON.parse(localStorage.getItem("bragg-phso")||"{}")||{};PHMI=JSON.parse(localStorage.getItem("bragg-phmi")||"{}")||{};}catch(e){}
+const phSaveOv=()=>{try{localStorage.setItem("bragg-phso",JSON.stringify(PHSO));localStorage.setItem("bragg-phmi",JSON.stringify(PHMI));}catch(e){}};
+const gS=()=>+$("csN").value>0?+$("csN").value:1;
+function phS(ph){const v=ph&&PHSO[phKey(ph)];return v>0?+v:gS();}
+function phMinV(ph){const v=ph&&PHMI[phKey(ph)];return v!=null&&isFinite(+v)&&+v>=0?+v:cminV();}
+
+/* phase colours (golden-angle hues, greens skipped: green marks matched peaks), remembered per CIF */
+function phColor(i){const h0=((i-1)*137.508)%360,h=h0>=80&&h0<=170?(h0+95)%360:h0,ring=Math.floor((i-1)/12)%3,l=[0.5,0.62,0.42][ring],s=0.75;
+  const f=n=>{const k=(n+h/30)%12,a=s*Math.min(l,1-l);return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1))));};return "#"+[f(0),f(8),f(4)].map(v=>v.toString(16).padStart(2,"0")).join("");}
+const phKey=ph=>ph.file+"|"+(ph.code||ph.block||"");
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch(e){}}
+const phNice=ph=>[compactFormula(ph.formula||ph.block||ph.file),ph.mineral?`(${ph.mineral})`:"",ph.sg].filter(Boolean).join(" ");
+const phLeg=ph=>compactFormula(ph.formula||ph.block||ph.file)+(ph.code?"  #"+ph.code:"");
+
+async function addCIFs(items){
+  const st=$("cifStatus");let added=0;const failed=[];
+  items=items.map(x=>x instanceof File?{f:x,group:"Files"}:x).sort((a,b)=>a.group===b.group?a.f.name.localeCompare(b.f.name,undefined,{numeric:true}):0);
+  for(const it of items){const f=it.f;st.textContent=`Reading ${f.name}…`;await new Promise(r=>setTimeout(r,0));
+    try{const txt=await f.text();const blocks=cifBlocks(txt);let any=false;
+      for(const b of blocks){const ph=phaseFromBlock(b,f.name);if(!ph)continue;
+        ph.lines=simulateX(ph,0.6);ph.id=++phaseSeq;ph.group=it.group;ph.show=false;
+        ph.color=lsGet("xrd-col:"+phKey(ph))||phColor(ph.id);ph.star=lsGet("xrd-star:"+phKey(ph))==="1";
+        S.phases.push(ph);any=true;added++;}
+      if(!any)failed.push(f.name);}catch(err){failed.push(f.name+" ("+err.message+")");}}
+  welcomeHide();renderPhases();draw();renderPeaks();cfsUI(true);plotStarUI();
+  st.textContent=`${S.phases.length} phase${S.phases.length!==1?"s":""} loaded, ${S.phases.filter(p=>p.show).length} ticked.`+(added?" Click a phase and use ↑ ↓ to preview them.":"")+(failed.length?` Could not read: ${failed.join(", ")}.`:"");}
+
+/* ============================================================== matching CIF lines ↔ observed peaks (in 2θ) */
+function shownLines(){const lam=lamNow(),out=[];
+  for(const ph of S.phases){if(!phVisible(ph))continue;const mn=phMinV(ph);for(const x of phCalc(ph,lam))if(x.I>=mn)out.push({ph,x});}return out;}
+function peakMatch(p,SL){const tol=+$("mTol").value||0.15;let best=null,bd=tol;
+  for(const o of SL){const d=Math.abs(o.x.tth-p.tth);if(d<=bd&&(!best||d<bd||(d===bd&&o.x.I>best.x.I))){bd=d;best=o;}}return best;}
+function scanRange(){const t=activeTr();if(!t)return null;const a=t.tth[0],b=t.tth[t.tth.length-1];return [Math.min(a,b),Math.max(a,b)];}
+function matchStats(ph){const t=activeTr();if(!t||!t.peaks.length)return null;const R=scanRange(),tol=+$("mTol").value||0.15,mn=phMinV(ph);
+  const L=phCalc(ph,lamNow()).filter(x=>x.I>=mn&&x.tth>=R[0]&&x.tth<=R[1]);
+  const n=t.peaks.filter(p=>L.some(x=>Math.abs(x.tth-p.tth)<=tol)).length;
+  const strong=L.filter(x=>x.I>=30),miss=strong.filter(x=>!t.peaks.some(p=>Math.abs(x.tth-p.tth)<=tol)).length;
+  return {n,N:t.peaks.length,miss,strong:strong.length};}
+/* score: intensity-weighted share of observed peaks hit, corrected for chance (share of the scan covered by ±tol windows), minus half the share of strong lines (≥30 %) not observed */
+function fitScore(ph){const t=activeTr();if(!t||!t.peaks.length)return null;const R=scanRange(),tol=+$("mTol").value||0.15,mn=phMinV(ph);
+  const L=phCalc(ph,lamNow()).filter(x=>x.I>=mn&&x.tth>=R[0]&&x.tth<=R[1]);
+  const mxNet=Math.max(...t.peaks.map(p=>p.net),1e-12),w=t.peaks.map(p=>Math.sqrt(Math.max(100*p.net/mxNet,1))),W=w.reduce((a,b)=>a+b,0);
+  const hitW=t.peaks.reduce((a,p,i)=>a+(L.some(x=>Math.abs(x.tth-p.tth)<=tol)?w[i]:0),0)/W;
+  const iv=L.map(x=>[x.tth-tol,x.tth+tol]).sort((a,b)=>a[0]-b[0]);let cov=0,e=-Infinity;
+  for(const [a,b] of iv){const a2=Math.max(a,e);if(b>a2)cov+=b-a2;e=Math.max(e,b);}
+  const chance=Math.min(0.95,cov/(R[1]-R[0]));
+  const strong=L.filter(x=>x.I>=30),miss=strong.filter(x=>!t.peaks.some(p=>Math.abs(x.tth-p.tth)<=tol)).length,missF=strong.length?miss/strong.length:1;
+  return {score:(hitW-chance)/(1-chance)-0.5*missF,hitW,chance,missF};}
+
+/* ============================================================== phase list UI */
+const STAR_G="★ Starred";
+function viewGroups(){const q=($("cSearch").value||"").trim().toLowerCase();
+  const ok=ph=>!q||[ph.code,ph.formula,compactFormula(ph.formula||""),ph.file,ph.mineral,ph.sg].some(v=>String(v||"").toLowerCase().includes(q));
+  const order=[],m=new Map();for(const ph of S.phases){if(!ok(ph))continue;const g=ph.group||"Files";if(!m.has(g)){m.set(g,[]);order.push(g);}m.get(g).push(ph);}
+  const out=order.map(g=>[g,m.get(g),false]);const st=S.phases.filter(p=>p.star&&ok(p));if(st.length)out.unshift([STAR_G,st,true]);return out;}
+function renderPhases(){
+  const box=$("phaseGroups");box.textContent="";const has=S.phases.length>0;
+  $("cClear").disabled=!has;for(const b of ["cBest","cBestPrev","cBestNext","cBestIn"])$(b).disabled=!has;$("svLines").disabled=S.focus==null;$("fitS").disabled=S.focus==null;
+  {const sel=$("cBestIn"),keep=sel.value,gs=viewGroups().map(x=>x[0]);sel.textContent="";const o0=document.createElement("option");o0.value="";o0.textContent="all folders";sel.appendChild(o0);
+   for(const g of gs){const o=document.createElement("option");o.value=g;o.textContent=g;sel.appendChild(o);}sel.value=gs.includes(keep)?keep:"";}
+  if(!has){box.innerHTML='<div class="keys" style="padding:12px;text-align:center">no CIF loaded</div>';renderLines();return;}
+  const VG=viewGroups();
+  if(!VG.length){box.innerHTML=`<div class="keys" style="padding:12px;text-align:center">no phase matches “${esc($("cSearch").value)}”</div>`;renderLines();return;}
+  for(const [g,list,isStar] of VG){
+    const grp=document.createElement("div");grp.className="pgroup"+(isStar?" star":"");const closed=S.collapsed.has(g);
+    const head=document.createElement("div");head.className="pghead";
+    head.innerHTML=`<button class="tog" aria-label="toggle">${closed?"▸":"▾"}</button><b></b><span class="keys"></span><button class="bf" title="Best fit within this box">★ best fit</button><button class="all">tick all</button><button class="none">untick all</button>`+(isStar?`<button class="rm" title="Unstar all">unstar all</button>`:`<button class="rm">remove</button>`);
+    head.querySelector("b").textContent=isStar?g:"📁 "+g;head.querySelector(".keys").textContent=`${list.length} phase${list.length>1?"s":""}, ${list.filter(p=>p.show).length} ticked`;
+    head.querySelector(".tog").onclick=()=>{closed?S.collapsed.delete(g):S.collapsed.add(g);renderPhases();};
+    head.querySelector(".bf").onclick=()=>{$("cBestIn").value=g;bestGo(0);};
+    head.querySelector(".all").onclick=()=>{list.forEach(p=>p.show=true);phaseRefresh();};
+    head.querySelector(".none").onclick=()=>{list.forEach(p=>p.show=false);phaseRefresh();};
+    head.querySelector(".rm").onclick=()=>{if(isStar){list.forEach(p=>{p.star=false;lsSet("xrd-star:"+phKey(p),null);});renderPhases();return;}
+      S.phases=S.phases.filter(p=>!list.includes(p));if(list.some(p=>p.id===S.focus))S.focus=null;phaseRefresh();};
+    grp.appendChild(head);
+    if(!closed){
+      const tbl=document.createElement("table");
+      tbl.innerHTML='<thead><tr><th style="text-align:center">show</th><th style="text-align:left">phase</th><th>a, b, c (Å)</th><th>α, β, γ (°)</th><th title="Observed peaks of the active trace with a line (≥ lines %) within ± match tolerance">peaks matched</th><th title="Lines ≥ 30 % inside the scan range with no observed peak within ± tolerance">strong missing</th><th title="Best-fit score (see ★ Best fit)">score</th><th></th></tr></thead><tbody></tbody>';
+      const tb=tbl.querySelector("tbody");
+      for(const ph of list){const tr=document.createElement("tr");tr.dataset.id=ph.id;tr.dataset.box=g;
+        const st=matchStats(ph),fs=fitScore(ph);
+        tr.innerHTML=`<td style="text-align:center;white-space:nowrap"><input type="checkbox" ${ph.show?"checked":""} aria-label="show"><button class="starb${ph.star?" on":""}" title="${ph.star?"Unstar":"Star: also list it in the ★ Starred box"}">${ph.star?"★":"☆"}</button></td><td><input type="color" class="swc" aria-label="colour"><b></b><br><span class="keys"></span></td><td></td><td></td><td></td><td></td><td></td><td><button class="x" aria-label="Remove">×</button></td>`;
+        const c=tr.querySelector(".swc");c.value=ph.color;c.onclick=ev=>ev.stopPropagation();
+        c.oninput=()=>{ph.color=c.value;draw();};c.onchange=()=>{lsSet("xrd-col:"+phKey(ph),c.value);renderPeaks();};
+        tr.querySelector("b").textContent=phNice(ph);
+        tr.querySelector(".keys").textContent=[ph.code?"ICSD/COD "+ph.code:"",ph.file,ph.warn?"⚠ "+ph.warn:""].filter(Boolean).join(" · ");
+        tr.children[2].textContent=ph.cell.slice(0,3).map(v=>v.toFixed(4)).join(", ");
+        tr.children[3].textContent=ph.cell.slice(3).map(v=>+v.toFixed(3)).join(", ");
+        tr.children[4].textContent=st?`${st.n} / ${st.N}`:"–";tr.children[5].textContent=st?`${st.miss} / ${st.strong}`:"–";tr.children[6].textContent=fs?fs.score.toFixed(2):"–";
+        tr.querySelector("input").onchange=e=>{ph.show=e.target.checked;if(!ph.show&&S.focus===ph.id)S.focus=null;phaseRefresh();};
+        tr.querySelector(".starb").onclick=e=>{e.stopPropagation();starToggle(ph);};
+        tr.querySelector(".x").onclick=e=>{e.stopPropagation();S.phases=S.phases.filter(p=>p!==ph);if(S.focus===ph.id)S.focus=null;phaseRefresh();};
+        tr.onclick=e=>{if(e.target.closest("input,button"))return;focusPhase(ph.id,g);$("phaseBox").focus({preventScroll:true});};
+        tb.appendChild(tr);}
+      const body=document.createElement("div");body.className="pgbody";body.appendChild(tbl);grp.appendChild(body);}
+    box.appendChild(grp);}
+  phMarkFocus();renderLines();}
+function starToggle(ph){ph.star=!ph.star;lsSet("xrd-star:"+phKey(ph),ph.star?"1":null);renderPhases();plotStarUI();cfsUI(true);}
+/* ☆ star button at the bottom left of the plot: stars / unstars the highlighted phase */
+function plotStarUI(){const b=$("plotStar"),ph=S.phases.find(p=>p.id===S.focus);b.hidden=!ph;if(!ph)return;b.classList.toggle("on",!!ph.star);
+  b.firstChild.textContent=ph.star?"★ starred":"☆ star";b.querySelector(".nm").textContent=phLeg(ph);}
+$("plotStar").addEventListener("click",e=>{e.stopPropagation();const ph=S.phases.find(p=>p.id===S.focus);if(ph)starToggle(ph);});
+/* ★ CIF settings: own s and lines ≥ % I of every starred CIF (blank = global) */
+const CFS={key:"",drag:false};
+function cfsUI(force){const b=$("cfsBox");const P=S.phases.filter(p=>p.star),gs=gS(),gm=cminV();
+  const key=[gs,gm,P.map(p=>p.id+":"+(p.show?1:0)+":"+(PHSO[phKey(p)]||"")+":"+(PHMI[phKey(p)]??"")+":"+p.color).join(",")].join("|");if(!force&&key===CFS.key)return;
+  const ae=document.activeElement;if(!force&&ae&&b.contains(ae)&&ae.tagName==="INPUT")return;if(CFS.drag)return;CFS.key=key;
+  b.hidden=!S.phases.length;
+  b.innerHTML=`<div class="row2" style="gap:10px;flex-wrap:wrap"><b>★ CIF settings</b><span class="keys">calibration factor s and lines ≥ % I of each starred CIF on its own — blank = the global value (s ${gs}, ${gm} %) · remembered per CIF file</span>${P.some(p=>PHSO[phKey(p)]>0||PHMI[phKey(p)]!=null)?'<button id="cfsRsAll" title="All starred CIFs back to the global s and % I">↺ all to global</button>':""}${P.length?'<button id="cfsTkAll">tick all</button><button id="cfsTkNone">untick all</button>':""}</div>`+
+   (P.length?`<table><thead><tr><th title="Show this CIF (same as its tick in Phases from CIF)">show</th><th>CIF</th><th title="d = s × d(CIF) for this CIF only">s</th><th title="Only lines at least this strong (% of the strongest) are drawn / used for matching for this CIF">lines ≥ % I</th><th></th></tr></thead><tbody>${P.map(p=>{const so=PHSO[phKey(p)],mi=PHMI[phKey(p)];
+     return `<tr data-id="${p.id}"><td style="text-align:center"><input class="cfsTk" type="checkbox"${p.show?" checked":""}></td><td><span class="sw" style="background:${p.color}"></span>${esc(phNice(p))} <span class="keys">${p.code?"#"+esc(p.code)+" · ":""}${esc(p.file)}</span></td>
+     <td><span class="row2" style="gap:6px"><input class="cfsSr" type="range" min="0.95" max="1.05" step="0.0005" value="${so>0?so:gs}"><input class="cfsS" type="number" step="0.0005" min="0.5" max="1.5" value="${so>0?so:""}" placeholder="${gs}"><button class="cfsFit" title="Fit s of this CIF to the peaks of the active trace">fit</button></span></td>
+     <td><span class="row2" style="gap:6px"><input class="cfsMr" type="range" min="0" max="100" step="0.5" value="${mi!=null?mi:gm}"><input class="cfsM" type="number" step="0.5" min="0" max="100" value="${mi!=null?mi:""}" placeholder="${gm}"></span></td>
+     <td><button class="cfsR" title="Back to the global s and % I">↺</button></td></tr>`;}).join("")}</tbody></table>`:`<span class="keys">★ star CIFs (☆ in the phase list, the ☆ star button on the plot, or the s key) to set their own s and % I here</span>`);
+  const all=()=>{phSaveOv();calcChanged();cfsUI(true);};
+  for(const [id,on] of [["cfsTkAll",true],["cfsTkNone",false]]){const bt=$(id);if(bt)bt.onclick=()=>{for(const p of P)p.show=on;if(!on&&P.some(p=>p.id===S.focus))S.focus=null;phaseRefresh();cfsUI(true);};}
+  const ra=$("cfsRsAll");if(ra)ra.onclick=()=>{for(const p of P){delete PHSO[phKey(p)];delete PHMI[phKey(p)];}all();};
+  for(const tr of b.querySelectorAll("tr[data-id]")){const p=S.phases.find(q=>String(q.id)===tr.dataset.id);if(!p)continue;const k=phKey(p);
+    tr.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Enter")i.blur();}));
+    tr.querySelector(".cfsTk").onchange=e=>{p.show=e.target.checked;if(!p.show&&S.focus===p.id)S.focus=null;phaseRefresh();cfsUI(true);};
+    const sr=tr.querySelector(".cfsSr"),sn=tr.querySelector(".cfsS"),mr=tr.querySelector(".cfsMr"),mn=tr.querySelector(".cfsM");
+    let raf=0;const live=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;draw();});};
+    for(const r of [sr,mr]){r.addEventListener("pointerdown",()=>{CFS.drag=true;});r.addEventListener("change",()=>{CFS.drag=false;});}
+    sr.oninput=()=>{PHSO[k]=+sr.value;sn.value=sr.value;live();};sr.onchange=()=>{PHSO[k]=+sr.value;all();};
+    mr.oninput=()=>{PHMI[k]=+mr.value;mn.value=mr.value;live();};mr.onchange=()=>{PHMI[k]=+mr.value;all();};
+    sn.onchange=()=>{const v=parseFloat(sn.value);if(isFinite(v)&&v>0)PHSO[k]=v;else delete PHSO[k];all();};
+    mn.onchange=()=>{const v=parseFloat(mn.value);if(isFinite(v)&&v>=0)PHMI[k]=Math.min(100,v);else delete PHMI[k];all();};
+    tr.querySelector(".cfsFit").onclick=()=>{S.focus=p.id;$("fitS").click();cfsUI(true);};
+    tr.querySelector(".cfsR").onclick=()=>{delete PHSO[k];delete PHMI[k];all();};}}
+function phaseRefresh(){renderPhases();renderPeaks();draw();plotStarUI();cfsUI(true);$("cifStatus").textContent=`${S.phases.length} phase${S.phases.length!==1?"s":""} loaded, ${S.phases.filter(p=>p.show).length} ticked.`;}
+function phFocusRows(id){const all=[...$("phaseGroups").querySelectorAll(`tr[data-id="${id}"]`)],inBox=all.filter(r=>r.dataset.box===S.focusBox);return inBox.length?inBox:all.slice(0,1);}
+function phMarkFocus(){const on=S.focus!=null?new Set(phFocusRows(S.focus)):new Set();$("phaseGroups").querySelectorAll("tr[data-id]").forEach(r=>r.classList.toggle("focus",on.has(r)));}
+function focusPhase(id,box){S.focus=id;if(box!==undefined)S.focusBox=box;$("fitS").disabled=false;setTimeout(plotStarUI,0);phMarkFocus();renderLines();renderPeaks();draw();$("svLines").disabled=S.focus==null;
+  const tr=phFocusRows(id)[0];if(tr){const bx=tr.closest(".pgbody");if(bx){const br=bx.getBoundingClientRect(),rr=tr.getBoundingClientRect(),hh=(bx.querySelector("thead")||{offsetHeight:0}).offsetHeight;
+    if(rr.top<br.top+hh)bx.scrollTop-=br.top+hh-rr.top;else if(rr.bottom>br.bottom)bx.scrollTop+=rr.bottom-br.bottom;}}}
+$("phaseBox").addEventListener("keydown",e=>{
+  const E=viewGroups().flatMap(([g,Lg])=>S.collapsed.has(g)?[]:Lg.map(p=>({p,g})));if(!E.length)return;
+  let j=E.findIndex(o=>o.p.id===S.focus&&o.g===S.focusBox);if(j<0)j=E.findIndex(o=>o.p.id===S.focus);
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();j=j<0?0:Math.max(0,Math.min(E.length-1,j+(e.key==="ArrowDown"?1:-1)));focusPhase(E[j].p.id,E[j].g);}
+  else if((e.key===" "||e.key==="Enter")&&j>=0){e.preventDefault();const ph=E[j].p;ph.show=!ph.show;phaseRefresh();}
+  else if(e.key==="Escape"){S.focus=null;phMarkFocus();renderLines();renderPeaks();draw();plotStarUI();}
+  else if((e.key==="s"||e.key==="S")&&j>=0){e.preventDefault();starToggle(E[j].p);}});
+function renderLines(){
+  const tb=$("lineRows");tb.textContent="";const ph=S.phases.find(p=>p.id===S.focus);
+  if(!ph){$("lineTitle").textContent="Lines";$("lineSub").textContent="";tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted)">click a phase to list its lines</td></tr>';return;}
+  const lam=lamNow(),s=phS(ph),t=activeTr(),tol=+$("mTol").value||0.15;
+  $("lineTitle").textContent=phNice(ph);$("lineSub").textContent=`λ = ${lam} Å · s = ${s}${PHSO[phKey(ph)]>0?" (own)":""} · lines ≥ ${phMinV(ph)} % · zero ${+$("z0").value||0}° · lines ≥ 0.5 %`;
+  for(const x of phCalc(ph,lam)){if(x.I<0.5)continue;let m="",bd=tol;
+    if(t)t.peaks.forEach((p,i)=>{const e=p.tth-x.tth;if(Math.abs(e)<=bd){bd=Math.abs(e);m=`#${i+1} (${e>=0?"+":""}${e.toFixed(3)}°)`;}});
+    const tr=document.createElement("tr");
+    for(const v of [x.ln.hkl,x.ln.m,x.ln.d.toFixed(5),x.d.toFixed(5),x.tth.toFixed(4),x.I.toFixed(1),m]){const td=document.createElement("td");td.textContent=v;tr.appendChild(td);}
+    if(m)tr.lastChild.style.color="var(--match)";if(x.I<phMinV(ph))tr.style.opacity=.5;
+    tr.title="Click to zoom the plot to this line";
+    tr.onclick=()=>zoomTo2th(x.tth,1.2);tb.appendChild(tr);}}
+function bestRank(){const g=$("cBestIn").value;return S.phases.filter(ph=>!g||(g===STAR_G?ph.star:(ph.group||"Files")===g)).map(ph=>({ph,f:fitScore(ph)})).filter(o=>o.f).sort((a,b)=>b.f.score-a.f.score);}
+function bestGo(step){if(!S.phases.length)return;const t=activeTr();if(!t||!t.peaks.length){$("cifStatus").textContent="Load a pattern with detected peaks first.";return;}
+  const rank=bestRank();if(!rank.length){$("cifStatus").textContent="No phases in that box.";return;}
+  const cur=rank.findIndex(o=>o.ph.id===S.focus);
+  const i=step===0||cur<0?(step<0?rank.length-1:0):((cur+step)%rank.length+rank.length)%rank.length;
+  const o=rank[i],g=$("cBestIn").value||o.ph.group||"Files";S.collapsed.delete(g);renderPhases();focusPhase(o.ph.id,g);$("phaseBox").focus({preventScroll:true});
+  const f=o.f;$("cifStatus").textContent=`Best fit #${i+1} of ${rank.length}: ${phLeg(o.ph)} · score ${f.score.toFixed(2)} (peaks hit ${(100*f.hitW).toFixed(0)} %, chance ${(100*f.chance).toFixed(0)} %, strong lines missing ${(100*f.missF).toFixed(0)} %). ◀ ▶ to step.`;}
+$("cBest").onclick=()=>bestGo(0);$("cBestNext").onclick=()=>bestGo(1);$("cBestPrev").onclick=()=>bestGo(-1);
+$("cSearch").addEventListener("input",()=>renderPhases());
+$("cSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){const v=viewGroups();if(v.length&&v[0][1].length)focusPhase(v[0][1][0].id,v[0][0]);}});
+$("cSearchX").onclick=()=>{$("cSearch").value="";renderPhases();};
+$("cClear").onclick=()=>{S.phases=[];S.focus=null;phaseRefresh();};
+function calcChanged(){renderPhases();renderPeaks();draw();cfsUI(true);}
+$("cs").addEventListener("input",()=>{$("csN").value=$("cs").value;calcChanged();});
+$("csN").addEventListener("change",()=>{const v=+$("csN").value;if(!(v>0))$("csN").value=1;$("cs").value=$("csN").value;calcChanged();});
+$("z0").addEventListener("change",calcChanged);
+$("s1").onclick=()=>{$("csN").value=1;$("cs").value=1;calcChanged();};
+/* fit s for the highlighted phase: grid search for the most (intensity-weighted) matched peaks, then least squares s = Σ d_obs·d_calc / Σ d_calc² over the matched pairs */
+$("fitS").onclick=()=>{const ph=S.phases.find(p=>p.id===S.focus),t=activeTr();if(!ph||!t||!t.peaks.length){$("cifStatus").textContent="Highlight a phase and load a pattern with peaks first.";return;}
+  const lam=t.lamUse,z=+$("z0").value||0,tol=+$("mTol").value||0.15,mn=phMinV(ph),R=scanRange();
+  const base=ph.lines.map(ln=>({ln,d:ln.d}));
+  /* intensities at the current s decide which lines count (≥ lines %) */
+  const keep=new Set(phCalc(ph,lam).filter(x=>x.I>=mn).map(x=>x.ln));const L0=base.filter(o=>keep.has(o.ln));
+  const mxNet=Math.max(...t.peaks.map(p=>p.net),1e-12),w=t.peaks.map(p=>Math.sqrt(Math.max(100*p.net/mxNet,1)));
+  const evalS=s=>{let hit=0,dev=0,pairs=[];const T=L0.map(o=>{const sn=lam/(2*o.d*s);return sn<1?{o,tth:360/Math.PI*Math.asin(sn)+z}:null;}).filter(x=>x&&x.tth>=R[0]-1&&x.tth<=R[1]+1);
+    t.peaks.forEach((p,i)=>{let b=null,bd=tol;for(const x of T){const d=Math.abs(x.tth-p.tth);if(d<=bd){bd=d;b=x;}}if(b){hit+=w[i];dev+=bd;pairs.push([p,b.o]);}});return {hit,dev,pairs};};
+  let best=null,bs=1;for(let s=0.97;s<=1.03+1e-12;s+=0.00005){const r=evalS(s);if(!best||r.hit>best.hit+1e-9||(Math.abs(r.hit-best.hit)<=1e-9&&r.dev<best.dev)){best=r;bs=s;}}
+  if(!best.pairs.length){$("cifStatus").textContent="fit s: no peak within ± tolerance for any s in 0.97–1.03.";return;}
+  let num=0,den=0;for(const [p,o] of best.pairs){const dobs=lam/(2*Math.sin((p.tth-z)*Math.PI/360));num+=dobs*o.d;den+=o.d*o.d;}
+  const sLS=num/den,chk=evalS(sLS),sFin=chk.hit+1e-9>=best.hit?sLS:bs,fin=evalS(sFin);
+  let rss=0;for(const [p,o] of fin.pairs){const dobs=lam/(2*Math.sin((p.tth-z)*Math.PI/360));rss+=(dobs-sFin*o.d)**2;}
+  const own=ph.star;if(own){PHSO[phKey(ph)]=sFin;phSaveOv();}else{$("csN").value=sFin;$("cs").value=sFin;}calcChanged();
+  $("cifStatus").textContent=`fit s (${phLeg(ph)}${own?", own s of this ★ CIF":", global s — star the phase to give it its own s"}): s = ${sFin} → a = ${ph.cell.slice(0,3).map(v=>+(v*sFin).toPrecision(7)).join(", ")} Å · ${fin.pairs.length} peaks matched, rms Δd = ${Math.sqrt(rss/fin.pairs.length).toExponential(3)} Å (zero shift ${z}° held fixed).`;};$("cmin").addEventListener("change",calcChanged);$("mTol").addEventListener("change",calcChanged);
+
+/* ============================================================== data table + metadata */
+function refreshAll(){renderTraces();renderMeta();renderPeaks();renderPhases();draw();uiSync();}
+function uiSync(){const has=S.traces.length>0;$("chartEmpty").hidden=has||S.phases.length>0;
+  for(const id of ["svPlot","cpPlot","svPeaks","svData","svMeta","clearData"])$(id).disabled=!has&&!(id==="svPlot"||id==="cpPlot")||(!has&&!S.phases.length);
+  $("stHv").textContent=$("stH").value+" %";$("offv").textContent=$("offset").value+" %";$("pbCol").hidden=$("pb").value!=="custom";
+  const t=activeTr();
+  $("fileinfo").innerHTML=t?`<span><b>${esc(t.fileMeta.name)}</b></span><span>${esc(t.fileMeta.format)}</span><span>λ1 ${t.fileMeta.lambda1||"–"} Å</span><span>${S.traces.length} trace${S.traces.length>1?"s":""}</span>`:'<span>drop .raw / .xy data or .cif files (or folders of CIFs) anywhere on the page</span>';
+  $("dataCount").textContent=S.traces.length?`${S.traces.length} trace${S.traces.length>1?"s":""} from ${new Set(S.traces.map(t=>t.fileMeta)).size} file(s)`:"";}
+function renderTraces(){
+  const tb=$("traceRows");tb.textContent="";
+  if(!S.traces.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted)">no data loaded</td></tr>';return;}
+  S.traces.forEach((t,idx)=>{const r=t.range,tr=document.createElement("tr");if(idx===S.active)tr.className="sel";
+    tr.innerHTML=`<td style="text-align:center"><input type="checkbox" ${t.visible?"checked":""} aria-label="show"></td><td><input type="color" class="swc" value="${t.color}"></td>
+      <td><b></b> ${t.fileMeta.ranges.length>1?`<span class="rtag">R${r.index}</span>`:""} ${r.dupOf?`<span class="dtag" title="Counts identical to range ${r.dupOf} of the same file">same as R${r.dupOf}</span>`:""}</td>
+      <td>${fmtG(r.tth0)} – ${fmtG(r.tth1)}</td><td>${fmtG(r.dtth)}</td><td>${r.npts}</td><td>${t.fileMeta.lambda1||"–"}</td><td>${t.peaks.length}</td><td><button class="x" aria-label="Remove">×</button></td>`;
+    tr.querySelector("b").textContent=baseName(t.fileMeta.name);
+    tr.querySelector("input[type=checkbox]").onchange=e=>{t.visible=e.target.checked;S.view=null;draw();};
+    const c=tr.querySelector(".swc");c.onclick=e=>e.stopPropagation();c.oninput=()=>{t.color=c.value;draw();};
+    tr.querySelector(".x").onclick=e=>{e.stopPropagation();removeTrace(idx);};
+    tr.onclick=e=>{if(e.target.closest("input,button"))return;S.active=idx;S.selPeak=-1;renderTraces();renderMeta();renderPeaks();renderPhases();draw();uiSync();};
+    tb.appendChild(tr);});}
+function removeTrace(idx){S.traces.splice(idx,1);if(S.active>=S.traces.length)S.active=S.traces.length-1;else if(idx<S.active)S.active--;S.selPeak=-1;S.view=null;refreshAll();}
+$("clearData").onclick=()=>{S.traces=[];S.active=-1;S.view=null;S.selPeak=-1;$("errors").innerHTML="";refreshAll();};
+function kvRows(rows){return '<table class="kv">'+rows.map(([k,v,n])=>`<tr><td>${esc(k)}</td><td class="v">${v}${n?`<span class="note">${esc(n)}</span>`:""}</td></tr>`).join("")+"</table>";}
+function renderMeta(){
+  const el=$("meta"),t=activeTr();if(!t){el.innerHTML='<div class="keys">click a trace to see its metadata</div>';return;}
+  const m=t.fileMeta;let h=`<div style="font-family:var(--f-display);font-weight:600;letter-spacing:.02em;margin:4px 0">${esc(m.name)}</div>`;
+  h+=kvRows([["Size",m.size.toLocaleString()+" bytes",""],...m.fields.map(([k,v,n])=>[k,esc(v),n])]);
+  if(m.warnings.length)h+=m.warnings.map(w=>'<div class="err">'+esc(w)+"</div>").join("");
+  for(const r of m.ranges){const rows=[];
+    if(!r.text){
+      rows.push(["Start / end time",esc(r.start)+" → "+esc(r.end),"@+0x00 / +0x10"]);
+      rows.push(["2θ start / end (°)",r.tth0+" / "+r.tth1,"@+0x2C / +0x34"]);
+      rows.push(["ω start / end (°)",r.om0+" / "+r.om1,"@+0x30 / +0x38 — ω = 2θ/2 here (symmetric scan)"]);
+      rows.push(["Step 2θ / ω (°)",r.dtth+" / "+r.dom,"@+0x3C / +0x40"]);
+      rows.push(["Points",String(r.npts),"@+0x22 — check: start + (n−1)·step = "+fmtG(r.tthEndCalc)]);
+      rows.push(["Value @+0x44",String(r.v68),"unidentified"]);
+      rows.push(["Stored min / max",r.sMin+" / "+r.sMax,(r.sMin||r.sMax)?((r.sMin===r.min&&r.sMax===r.max)?"@+0x78 / +0x7C — agrees with data":"@+0x78 / +0x7C — differs from data"):"@+0x78 / +0x7C — not filled"]);
+      rows.push(["Header flag @+0x20","0x"+r.flag.toString(16),"unidentified"]);
+    }else rows.push(["x start / end",fmtG(r.tth0)+" / "+fmtG(r.tth1),""],["Mean step",fmtG(r.dtth),""],["Points",String(r.npts),""]);
+    h+=`<div class="rangecard"><div class="rh">Range ${r.index}${r===t.range?' <span class="keys">(active)</span>':""}${r.dupOf?`<span class="dtag">counts identical to R${r.dupOf}</span>`:""}</div>${kvRows(rows)}`;
+    if(!r.text)h+=timeBlock(r);
+    h+="</div>";}
+  if(m.header.length)h+=`<details><summary>Undecoded file-header words (${m.header.length})</summary><div class="keys">STOE's format is undocumented; non-zero header values are shown verbatim.</div><table class="raw"><thead><tr><th>offset</th><th>bytes</th><th>u16</th><th>f32</th></tr></thead><tbody>${m.header.map(e=>`<tr><td>0x${e.off.toString(16).padStart(3,"0")}</td><td>${e.hex}</td><td>${e.u16}</td><td>${e.f32==null?"":e.f32}</td></tr>`).join("")}</tbody></table></details>`;
+  el.innerHTML=h;}
+function timeBlock(r){
+  if(r.calcStep===undefined)r.calcStep=r.dtth;
+  const span=r.tth1-r.tth0,n=(r.calcStep===r.dtth)?r.npts:Math.floor(span/r.calcStep+1e-9)+1;
+  const el=(r.durMin!=null)?r.durMin*60:null,manual=(r.tStepManual!=null);
+  const tStep=manual?r.tStepManual:(el!=null?el/n:null),tot=(tStep!=null)?n*tStep:null;
+  const lo=(el!=null)?Math.max(0,el-60)/n:null,hi=(el!=null)?(el+60)/n:null;
+  return `<div style="padding:4px 8px 8px;border-top:1px solid var(--line)"><div style="font-family:var(--f-display);font-weight:600;letter-spacing:.02em;margin:4px 0">Measurement time</div>`+kvRows([
+    ["Elapsed",el==null?"– (time stamps not readable)":fmtG(el)+" s = "+fmtG(el/60)+" min","end − start; stamps have 1-min resolution → ±60 s"],
+    ["Step (° 2θ)",`<input type="number" step="any" min="0" data-r="${r.index}" data-f="calcStep" value="${r.calcStep}">`,"default = data step "+r.dtth+"° from header"],
+    ["Number of steps",String(n),r.calcStep===r.dtth?"stored point count":"⌊(end − start)/step⌋ + 1, span "+fmtG(span)+"°"],
+    ["Time per step (s)",`<input type="number" step="any" min="0" data-r="${r.index}" data-f="tStep" value="${tStep==null?"":tStep}">`+(manual?` <button data-r="${r.index}" data-f="tReset" style="padding:1px 6px;font-size:.72rem">use time stamps</button>`:""),manual?"entered manually":(el!=null?"elapsed ÷ steps; range from ±60 s: "+fmtG(lo)+" – "+fmtG(hi)+" s":"enter value")],
+    ["<b>Total time</b>",tot==null?"–":"<b>"+fmtG(tot)+" s = "+fmtG(tot/60)+" min = "+hms(tot)+"</b>","steps × time per step"]])+"</div>";}
+document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||!el.dataset.f||!el.dataset.r||el.dataset.f==="tReset")return;
+  const t=activeTr();if(!t)return;const r=t.fileMeta.ranges.find(q=>q.index===+el.dataset.r);if(!r)return;const v=el.value===""?null:+el.value;
+  if(el.dataset.f==="tStep")r.tStepManual=(v>0)?v:null;else r.calcStep=(v>0)?v:r.dtth;renderMeta();});
+document.addEventListener("click",e=>{const el=e.target;if(!el.dataset||el.dataset.f!=="tReset")return;const t=activeTr();if(!t)return;
+  const r=t.fileMeta.ranges.find(q=>q.index===+el.dataset.r);if(r){r.tStepManual=null;renderMeta();}});
+
+/* ============================================================== peak table */
+function renderPeaks(){
+  const tb=$("peaks"),t=activeTr();
+  if(!t){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted)">no data</td></tr>';$("peakTitle").textContent="Peaks";$("peakSub").textContent="";return;}
+  $("peakTitle").textContent="Peaks — "+t.label;
+  $("peakSub").textContent=`${t.peaks.length} · λ ${t.lamUse} Å · area ±1.5·FWHM`;
+  const mx=Math.max(1e-12,...t.peaks.map(p=>p.net)),SL=shownLines();
+  tb.innerHTML=t.peaks.map((p,k)=>{const mt=SL.length?peakMatch(p,SL):null;
+    return `<tr data-k="${k}" class="${k===S.selPeak?"sel":""}"><td class="${p.manual?"man":""}">${k+1}${p.manual?"*":""}</td><td>${fmt(p.tth,4)}</td><td>${fmt(p.d,5)}</td><td>${fmt(p.invd,4)}</td>
+    <td>${fmt(p.fwhm,4)}</td><td>${fmt(p.net,1)}</td><td>${fmt(p.area,2)}</td><td>${fmt(100*p.net/mx,1)}</td>
+    <td class="mt">${mt?`<span style="color:${mt.ph.color}">■</span> ${esc(phLeg(mt.ph).split("  ")[0])} ${mt.x.ln.hkl} <span class="keys">(${(p.tth-mt.x.tth>=0?"+":"")+(p.tth-mt.x.tth).toFixed(3)}°)</span>`:(SL.length?'<span style="color:var(--warn)">–</span>':"")}</td>
+    <td><button class="x" aria-label="Remove peak">×</button></td></tr>`;}).join("")||'<tr><td colspan="10" style="text-align:center;color:var(--muted)">no peaks found</td></tr>';
+  tb.querySelectorAll("tr[data-k]").forEach(row=>{const k=+row.dataset.k;
+    row.onclick=()=>{S.selPeak=k;const p=t.peaks[k];zoomTo2th(p.tth,Math.max(0.6,(p.fwhm||0.1)*12));renderPeaks();};
+    row.querySelector(".x").onclick=e=>{e.stopPropagation();t.peaks.splice(k,1);S.selPeak=-1;renderPeaks();renderPhases();draw();};});}
+
+/* ============================================================== plot */
+const cv=$("chart"),ctx=cv.getContext("2d");
+function toX(tth,lam){if($("xmode").value==="tth")return tth;const c=tthToConv(tth,lam);return c[$("xmode").value];}
+function fromX(x,lam){const m=$("xmode").value;if(m==="tth")return x;const s=m==="d"?lam/(2*x):m==="invd"?x*lam/20:x*lam/(4*Math.PI);if(!(s>0&&s<=1))return NaN;return 360/Math.PI*Math.asin(s);}
+const xRev=()=>$("xmode").value==="d";
+function Ty(v){const m=$("ymode").value;return m==="log"?Math.log10(Math.max(v,1e-2)):m==="sqrt"?Math.sqrt(Math.max(v,0)):v;}
+function Tinv(t){const m=$("ymode").value;return m==="log"?Math.pow(10,t):m==="sqrt"?t*t:t;}
+const axisLabelX=()=>({tth:"2θ (°)",d:"d (Å)",invd:"1/d (nm⁻¹)",q:"Q (Å⁻¹)"}[$("xmode").value]);
+function buildSeries(){const vis=S.traces.filter(t=>t.visible),out=[];let gmin=Infinity,gmax=-Infinity;const norm=$("norm").checked;
+  for(const t of vis){t.lamUse=traceLam(t);const n=t.tth.length,xs=new Float64Array(n),ys=new Float64Array(n),nf=norm?100/Math.max(t.range.max,1e-12):1;
+    for(let i=0;i<n;i++){xs[i]=toX(t.tth[i],t.lamUse);ys[i]=Ty(t.y[i]*nf);if(ys[i]<gmin)gmin=ys[i];if(ys[i]>gmax)gmax=ys[i];}out.push({t,xs,ys,nf,off:0});}
+  const span=(gmax-gmin)||1,off=+$("offset").value;
+  out.forEach((s,k)=>{s.off=k*off/100*span;if(s.off)for(let i=0;i<s.ys.length;i++)s.ys[i]+=s.off;});return out;}
+function autoView(series,xlim){let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const s of series)for(let i=0;i<s.xs.length;i++){const x=s.xs[i];if(!isFinite(x))continue;if(xlim&&(x<xlim[0]||x>xlim[1]))continue;if(x<x0)x0=x;if(x>x1)x1=x;const y=s.ys[i];if(y<y0)y0=y;if(y>y1)y1=y;}
+  if(!isFinite(x0)){ /* no data: CIF-only view over 5–90° 2θ */
+    const a=toX(5,lamNow()),b=toX(90,lamNow());return {x0:xlim?xlim[0]:Math.min(a,b),x1:xlim?xlim[1]:Math.max(a,b),y0:0,y1:100};}
+  if($("xmode").value==="d"&&!xlim){x1=Math.min(x1,15);return autoView(series,[x0,x1]);}
+  if(xlim){x0=xlim[0];x1=xlim[1];}
+  const py=(y1-y0)*0.06||1;
+  return {x0,x1,y0:($("ymode").value==="lin"&&!$("norm").checked&&y0>=0&&+$("offset").value===0)?Math.max(0,y0-py):y0-py,y1:y1+py*2.2};}
+function niceTicks(a,b,n){const span=b-a;if(!(span>0))return [a];const raw=span/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p;
+  const st=(f<1.5?1:f<3?2:f<7?5:10)*p,out=[];for(let v=Math.ceil(a/st)*st;v<=b+st*1e-9;v+=st)out.push(+v.toPrecision(12));return out;}
+function plotColors(){const m=$("pb").value;let bg,ink;
+  if(m==="white"){bg="#ffffff";ink="#16212b";}else if(m==="black"){bg="#000000";ink="#e8edf1";}
+  else if(m==="custom"){bg=$("pbCol").value;const h=bg.replace("#",""),L=(0.299*parseInt(h.substr(0,2),16)+0.587*parseInt(h.substr(2,2),16)+0.114*parseInt(h.substr(4,2),16))/255;ink=L>0.55?"#16212b":"#e8edf1";}
+  else if(m==="transparent"){bg=null;ink=css("--ink");}
+  else{bg=css("--panel");ink=css("--ink");}
+  const base=bg||css("--panel");const grid=/^#[0-9a-f]{6}$/i.test(base)&&/^#[0-9a-f]{6}$/i.test(toHex(ink))?hexMix(toHex(ink),base,.12):"rgba(128,128,128,.25)";
+  const muted=/^#[0-9a-f]{6}$/i.test(base)?hexMix(toHex(ink),base,.6):ink;
+  return {bg,ink,grid,muted,match:css("--match"),warn:css("--warn"),accent:css("--accent")};}
+let lastSeries=[],geom=null,dragBox=null,exporting=false;
+function draw(){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;if(!W||!H)return;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+  ctx.setTransform(dpr,0,0,dpr,0,0);renderPlot(ctx,W,H);}
+function renderPlot(ctx,W,H){
+  const C=plotColors(),FS=+$("fs").value||12,LW=+$("lw").value||1.25;
+  ctx.clearRect(0,0,W,H);if(C.bg){ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);}
+  const series=buildSeries();lastSeries=series;
+  if(!series.length&&!S.phases.some(phVisible)){geom=null;return;}
+  if(!S.view)S.view=autoView(series);
+  const V=S.view,M={l:Math.round(FS*5.6),r:16,t:14,b:Math.round(FS*3.4)},pw=W-M.l-M.r,ph=H-M.t-M.b;
+  const px=x=>M.l+(xRev()?(V.x1-x)/(V.x1-V.x0):(x-V.x0)/(V.x1-V.x0))*pw,py=y=>M.t+(1-(y-V.y0)/(V.y1-V.y0))*ph;
+  geom={px,py,pw,ph,W,H,M};
+  $("xlo").value=+(xRev()?V.x1:V.x0).toPrecision(7);$("xhi").value=+(xRev()?V.x0:V.x1).toPrecision(7);
+  const FONT=`${FS}px "IBM Plex Sans",system-ui,sans-serif`,FMONO=`${Math.round(FS*.92)}px "IBM Plex Mono",monospace`;
+  ctx.font=FMONO;ctx.strokeStyle=C.grid;ctx.lineWidth=1;ctx.fillStyle=C.muted;
+  const xt=niceTicks(V.x0,V.x1,Math.max(3,Math.floor(pw/(FS*7.5))));ctx.textAlign="center";ctx.textBaseline="top";
+  for(const t of xt){const X=Math.round(px(t))+.5;ctx.beginPath();ctx.moveTo(X,M.t);ctx.lineTo(X,M.t+ph);ctx.stroke();ctx.fillText(+t.toPrecision(8),X,M.t+ph+5);}
+  const yt=niceTicks(V.y0,V.y1,Math.max(3,Math.floor(ph/(FS*4))));ctx.textAlign="right";ctx.textBaseline="middle";
+  for(const t of yt){const Y=Math.round(py(t))+.5;ctx.beginPath();ctx.moveTo(M.l,Y);ctx.lineTo(M.l+pw,Y);ctx.stroke();ctx.fillText($("ymode").value==="lin"?+t.toPrecision(8):fmtG(Tinv(t)),M.l-6,Y);}
+  ctx.strokeStyle=C.muted;ctx.strokeRect(M.l+.5,M.t+.5,pw,ph);
+  ctx.fillStyle=C.ink;ctx.font=FONT;ctx.textAlign="center";ctx.textBaseline="bottom";ctx.fillText(axisLabelX(),M.l+pw/2,H-4);
+  ctx.save();ctx.translate(FS*1.1,M.t+ph/2);ctx.rotate(-Math.PI/2);ctx.textBaseline="middle";
+  ctx.fillText(($("norm").checked?"Normalised intensity":"Intensity (counts)")+($("ymode").value==="log"?" — log":$("ymode").value==="sqrt"?" — √":""),0,0);ctx.restore();
+  ctx.save();ctx.beginPath();ctx.rect(M.l,M.t,pw,ph);ctx.clip();
+  const act=activeTr(),lam=lamNow();
+  /* CIF sticks along the bottom (ticked phases, highlighted one on top) */
+  const vis=S.phases.filter(phVisible).sort((a,b)=>(a.id===S.focus)-(b.id===S.focus)),stH=(+$("stH").value||35)/100,full=$("stFull").checked;
+  const labs=[];const lamK2=$("ka2").checked?lam2Now():null;
+  const drawSticks=(phs,L,dash,fac)=>{const foc=phs.id===S.focus,mn=phMinV(phs);ctx.strokeStyle=phs.color;ctx.setLineDash(dash);
+    for(const x of L){if(x.I<mn)continue;const xv=toX(x.tth,lam);if(!isFinite(xv)||(xv-V.x0)*(xv-V.x1)>0)continue;const X=px(xv),I=x.I*fac;
+      ctx.lineWidth=foc?2:1.4;
+      if(full){ctx.globalAlpha=0.15+0.85*I/100;ctx.beginPath();ctx.moveTo(X,M.t);ctx.lineTo(X,M.t+ph);ctx.stroke();}
+      else{ctx.globalAlpha=foc?1:0.85;const h=Math.max(2,I/100*stH*ph);ctx.beginPath();ctx.moveTo(X,M.t+ph);ctx.lineTo(X,M.t+ph-h);ctx.stroke();
+        if(!dash.length)labs.push({X,top:M.t+ph-h,ph:phs,x,foc});}}
+    ctx.globalAlpha=1;ctx.setLineDash([]);};
+  for(const phs of vis){drawSticks(phs,phCalc(phs,lam),[],1);if(lamK2)drawSticks(phs,phCalc(phs,lamK2),[3,3],0.5);}
+  /* data */
+  const drawLine=(xs,ys,color,lw,dash)=>{ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.setLineDash(dash||[]);ctx.beginPath();let on=false;
+    for(let i=0;i<xs.length;i++){const x=xs[i];if(!isFinite(x)){on=false;continue;}const X=px(x),Y=py(ys[i]);if(!on){ctx.moveTo(X,Y);on=true;}else ctx.lineTo(X,Y);}ctx.stroke();ctx.setLineDash([]);};
+  const ordered=series.filter(s=>s.t!==act).concat(series.filter(s=>s.t===act));
+  for(const s of ordered)drawLine(s.xs,s.ys,s.t.color,s.t===act?LW*1.2:LW*0.85);
+  const sa=series.find(s=>s.t===act);
+  if(sa){const t=sa.t,n=t.tth.length;
+    if($("showSm").checked&&t.sm){const ys=new Float64Array(n);for(let i=0;i<n;i++)ys[i]=Ty(t.sm[i]*sa.nf)+sa.off;drawLine(sa.xs,ys,C.ink,1,[]);}
+    if($("showBg").checked&&t.bg){const ys=new Float64Array(n);for(let i=0;i<n;i++)ys[i]=Ty(t.bg[i]*sa.nf)+sa.off;drawLine(sa.xs,ys,C.muted,1.2,[5,4]);}}
+  /* peak markers */
+  const SL=shownLines();
+  if($("showPk").checked){ctx.font=`${Math.round(FS*.85)}px "IBM Plex Mono",monospace`;
+    for(const s of series){if(!($("pkAll").checked||s.t===act))continue;
+      s.t.peaks.forEach((p,k)=>{const x=toX(p.tth,s.t.lamUse);if(!isFinite(x)||(x-V.x0)*(x-V.x1)>0)return;
+        const yv=Ty(Math.max(p.smooth,p.raw)*s.nf)+s.off,X=px(x),Y=py(yv)-5,sel=(s.t===act&&k===S.selPeak);
+        const col=sel?C.accent:(SL.length&&s.t===act?(peakMatch(p,SL)?C.match:C.warn):s.t.color);
+        if($("pkLines").checked&&s.t===act){ctx.strokeStyle=col;ctx.globalAlpha=.55;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(X,Y);ctx.lineTo(X,M.t+ph);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+        ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(X,Y);ctx.lineTo(X-4,Y-7);ctx.lineTo(X+4,Y-7);ctx.closePath();ctx.fill();
+        if(s.t===act||series.length===1){const m=$("xmode").value,lab=m==="tth"?p.tth.toFixed(3):m==="d"?p.d.toFixed(4):m==="invd"?p.invd.toFixed(3):p.q.toFixed(4);
+          ctx.save();ctx.translate(X+3,Y-10);ctx.rotate(-Math.PI/2);ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillStyle=sel?C.accent:col;ctx.fillText(lab+(p.manual?"*":""),0,0);ctx.restore();}});}}
+  /* CIF labels: strongest first, skipped where they would overlap */
+  if(($("cLab").checked||$("cLabD").checked)&&labs.length){const LF=+$("cLabSize").value||10;ctx.font=`${LF}px "IBM Plex Mono",monospace`;const used=[];
+    labs.sort((a,b)=>(b.foc-a.foc)||(b.x.I-a.x.I));
+    for(const L of labs){const txt=[$("cLab").checked?L.x.ln.hkl:"",$("cLabD").checked?L.x.d.toFixed(3)+" Å":""].filter(Boolean).join("  ");
+      const tw=ctx.measureText(txt).width,x0=L.X-LF*.6,x1=L.X+LF*.6,y1=L.top-3,y0=y1-tw;
+      if(y0<M.t)continue;if(used.some(u=>!(x1<u[0]||x0>u[1]||y1<u[2]||y0>u[3])))continue;used.push([x0,x1,y0,y1]);
+      ctx.save();ctx.translate(L.X+LF*.35,y1);ctx.rotate(-Math.PI/2);ctx.textAlign="left";ctx.textBaseline="middle";ctx.fillStyle=L.ph.color;ctx.globalAlpha=L.foc?1:.85;ctx.fillText(txt,0,0);ctx.restore();}}
+  ctx.restore();
+  /* legends: traces (top right), phases (top left) */
+  ctx.font=FONT;ctx.textBaseline="middle";const lh=FS*1.45;
+  if(series.length>1){ctx.textAlign="left";const w=Math.min(320,Math.max(...series.map(s=>ctx.measureText(s.t.label).width))+34),lx=M.l+pw-w-8,ly=M.t+8;
+    ctx.fillStyle=C.bg||css("--panel");ctx.globalAlpha=.88;ctx.fillRect(lx,ly,w,series.length*lh+8);ctx.globalAlpha=1;ctx.strokeStyle=C.grid;ctx.strokeRect(lx+.5,ly+.5,w,series.length*lh+8);
+    series.forEach((s,k)=>{const yy=ly+4+lh*k+lh/2;ctx.strokeStyle=s.t.color;ctx.lineWidth=s.t===act?3:2;ctx.beginPath();ctx.moveTo(lx+6,yy);ctx.lineTo(lx+24,yy);ctx.stroke();ctx.fillStyle=C.ink;ctx.fillText(s.t.label,lx+30,yy);});}
+  if(vis.length){ctx.textAlign="left";const vv=vis.slice().reverse(),txt=p=>phLeg(p)+(p.show?"":"  (preview)");
+    const w=Math.max(...vv.map(p=>{ctx.font=(p.id===S.focus?"600 ":"")+FONT;return ctx.measureText(txt(p)).width;}))+34+(exporting?0:16),lx=M.l+8,ly=M.t+8;
+    ctx.fillStyle=C.bg||css("--panel");ctx.globalAlpha=.88;ctx.fillRect(lx,ly,w,vv.length*lh+8);ctx.globalAlpha=1;ctx.strokeStyle=C.grid;ctx.strokeRect(lx+.5,ly+.5,w,vv.length*lh+8);
+    geom.legX=[];
+    vv.forEach((p,k)=>{const yy=ly+4+lh*k+lh/2;if(!exporting){ctx.font=FONT;ctx.fillStyle=C.muted;ctx.textAlign="center";ctx.fillText("×",lx+w-9,yy);ctx.textAlign="left";geom.legX.push({x0:lx+w-17,x1:lx+w-1,y0:yy-lh/2,y1:yy+lh/2,id:p.id});}ctx.strokeStyle=p.color;ctx.lineWidth=p.id===S.focus?3:2;ctx.beginPath();ctx.moveTo(lx+10,yy+lh*.32);ctx.lineTo(lx+10,yy-lh*.32);ctx.moveTo(lx+18,yy+lh*.32);ctx.lineTo(lx+18,yy-lh*.05);ctx.stroke();
+      ctx.font=(p.id===S.focus?"600 ":"")+FONT;ctx.fillStyle=C.ink;ctx.fillText(txt(p),lx+28,yy);});}
+  if(dragBox){ctx.fillStyle="rgba(80,140,255,.12)";ctx.strokeStyle=C.accent;ctx.lineWidth=1;
+    const x=Math.min(dragBox.x0,dragBox.x1),y=Math.min(dragBox.y0,dragBox.y1),w=Math.abs(dragBox.x1-dragBox.x0),h=Math.abs(dragBox.y1-dragBox.y0);ctx.fillRect(x,y,w,h);ctx.strokeRect(x+.5,y+.5,w,h);}}
+function pixToData(X,Y){const V=S.view,{pw,ph,M}=geom;let fx=(X-M.l)/pw;if(xRev())fx=1-fx;return {x:V.x0+fx*(V.x1-V.x0),y:V.y0+(1-(Y-M.t)/ph)*(V.y1-V.y0)};}
+function zoomTo2th(t2,w){const lam=lamNow(),a=toX(t2-w/2,lam),b=toX(t2+w/2,lam);if(!isFinite(a)||!isFinite(b))return;S.view=autoView(lastSeries,[Math.min(a,b),Math.max(a,b)]);draw();}
+cv.addEventListener("mousedown",e=>{if(!geom||e.button!==0)return;const r=cv.getBoundingClientRect();
+  {const X=e.clientX-r.left,Y=e.clientY-r.top,h=(geom.legX||[]).find(b=>X>=b.x0&&X<=b.x1&&Y>=b.y0&&Y<=b.y1);
+   if(h){e.preventDefault();const ph=S.phases.find(p=>p.id===h.id);if(ph){ph.show=false;if(S.focus===ph.id)S.focus=null;phaseRefresh();}return;}}dragBox={x0:e.clientX-r.left,y0:e.clientY-r.top,x1:e.clientX-r.left,y1:e.clientY-r.top,shift:e.shiftKey};});
+window.addEventListener("mousemove",e=>{const r=cv.getBoundingClientRect();
+  if(geom&&e.target===cv&&!dragBox){const X=e.clientX-r.left,Y=e.clientY-r.top,h=(geom.legX||[]).some(b=>X>=b.x0&&X<=b.x1&&Y>=b.y0&&Y<=b.y1);cv.style.cursor=h?"pointer":"crosshair";cv.title=h?"Remove this phase from the plot (untick / end the preview)":"";}if(dragBox){dragBox.x1=e.clientX-r.left;dragBox.y1=e.clientY-r.top;draw();}if(geom&&e.target===cv)readout(e.clientX-r.left,e.clientY-r.top);});
+window.addEventListener("mouseup",()=>{if(!dragBox)return;const b=dragBox;dragBox=null;
+  if(Math.abs(b.x1-b.x0)>6&&Math.abs(b.y1-b.y0)>6){const a=pixToData(b.x0,b.y0),c=pixToData(b.x1,b.y1);S.view={x0:Math.min(a.x,c.x),x1:Math.max(a.x,c.x),y0:Math.min(a.y,c.y),y1:Math.max(a.y,c.y)};}
+  else if(b.shift)addPeakAt(b.x0);draw();});
+cv.addEventListener("dblclick",()=>{S.view=null;draw();});
+/* wheel zoom only after the plot was clicked: otherwise the wheel scrolls the page */
+let wheelOn=false;const wheelSet=v=>{wheelOn=v;$("chartWrap").classList.toggle("wheelOn",v);};
+document.addEventListener("mousedown",e=>{wheelSet(!!(e.target.closest&&e.target.closest("#chartWrap"))&&e.target!==$("plotStar"));},true);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&wheelOn)wheelSet(false);});
+cv.addEventListener("wheel",e=>{if(!geom||!wheelOn)return;e.preventDefault();const r=cv.getBoundingClientRect(),d=pixToData(e.clientX-r.left,e.clientY-r.top),f=e.deltaY>0?1.25:0.8,V=S.view;
+  S.view=autoView(lastSeries,[d.x-(d.x-V.x0)*f,d.x+(V.x1-d.x)*f]);draw();},{passive:false});
+cv.addEventListener("mouseleave",()=>{$("readout").innerHTML="";});
+function readout(X,Y){if(!geom)return;const lam=lamNow(),d=pixToData(X,Y),t2=fromX(d.x,lam),c=isFinite(t2)?tthToConv(t2,lam):null,t=activeTr();let iy="";
+  if(t&&isFinite(t2)){const n=t.tth.length,st=(t.tth[n-1]-t.tth[0])/(n-1),i=Math.round((t2-t.tth[0])/st);if(i>=0&&i<n)iy=`<span>I ${t.y[i]}${t.bg?" (bg "+t.bg[i].toFixed(1)+")":""}</span>`;}
+  let near="";if(isFinite(t2)){let best=null,bp=6;for(const o of shownLines()){const xv=toX(o.x.tth,lam);if(!isFinite(xv))continue;const dp=Math.abs(geom.px(xv)-X);if(dp<bp){bp=dp;best=o;}}
+    if(best)near=`<span style="color:${best.ph.color}">${esc(phLeg(best.ph))} (${best.x.ln.hkl}) 2θ ${best.x.tth.toFixed(4)}° d ${best.x.d.toFixed(4)} Å I ${best.x.I.toFixed(1)} %</span>`;}
+  $("readout").innerHTML=`<span>2θ ${isFinite(t2)?t2.toFixed(4):"–"}°</span><span>d ${c?c.d.toFixed(5):"–"} Å</span><span>1/d ${c?c.invd.toFixed(4):"–"} nm⁻¹</span><span>Q ${c?c.q.toFixed(5):"–"} Å⁻¹</span>${iy}${near}`;}
+function addPeakAt(X){const t=activeTr();if(!t||!t.visible)return;const t2=fromX(pixToData(X,0).x,t.lamUse);if(!isFinite(t2))return;
+  const n=t.tth.length,st=(t.tth[n-1]-t.tth[0])/(n-1),i0=Math.round((t2-t.tth[0])/st),w=Math.max(2,Math.round(0.1/st));let best=-1,bv=-Infinity;
+  for(let i=Math.max(1,i0-w);i<=Math.min(n-2,i0+w);i++)if(t.sm[i]>bv){bv=t.sm[i];best=i;}
+  if(best<0||t.peaks.some(p=>p.i===best))return;t.peaks.push(peakProps(t,best,true));t.peaks.sort((a,b)=>a.tth-b.tth);S.selPeak=t.peaks.findIndex(p=>p.i===best);renderPeaks();renderPhases();}
+new ResizeObserver(()=>draw()).observe($("chartWrap"));
+$("zreset").onclick=()=>{S.view=null;draw();};
+function xRangeIn(){const a=+$("xlo").value,b=+$("xhi").value;if(isFinite(a)&&isFinite(b)&&a!==b){S.view=autoView(lastSeries,[Math.min(a,b),Math.max(a,b)]);draw();}}
+$("xlo").addEventListener("change",xRangeIn);$("xhi").addEventListener("change",xRangeIn);
+
+/* controls */
+for(const id of ["xmode","ymode","norm","offset"])$(id).addEventListener(id==="offset"?"input":"change",()=>{S.view=null;uiSync();draw();});
+for(const id of ["showBg","showSm","showPk","pkAll","pkLines","stFull","cLab","cLabD","cLabSize","ka2","pbCol","fs","lw"])$(id).addEventListener(id==="pbCol"?"input":"change",()=>draw());
+$("stH").addEventListener("input",()=>{uiSync();draw();});
+$("pb").addEventListener("change",()=>{uiSync();draw();});
+function lamChanged(){for(const t of S.traces){t.lamUse=traceLam(t);t.peaks=t.peaks.map(p=>{const c=tthToConv(p.tth,t.lamUse);return Object.assign({},p,{d:c.d,invd:c.invd,q:c.q});});}
+  if($("xmode").value!=="tth")S.view=null;refreshAll();}
+$("lam").addEventListener("change",lamChanged);$("lamFile").addEventListener("change",lamChanged);
+function paramsChanged(){readP();for(const t of S.traces)detectPeaks(t,P);S.selPeak=-1;renderPeaks();renderTraces();renderPhases();draw();}
+for(const id of ["pSg","pBg","pK","pRel","pSep"])$(id).addEventListener("change",paramsChanged);
+/* collapsible sections, remembered */
+{let C={};try{C=JSON.parse(localStorage.getItem("bragg-collapsed")||"{}")||{};}catch(e){}
+ document.querySelectorAll(".coll").forEach(b=>{const t=$(b.dataset.t);const set=h=>{t.hidden=h;b.textContent=h?"▸":"▾";b.title=h?"Expand":"Collapse";};set(!!C[b.dataset.t]);
+   b.addEventListener("click",()=>{set(!t.hidden);C[b.dataset.t]=t.hidden;try{localStorage.setItem("bragg-collapsed",JSON.stringify(C));}catch(e){}});});}
+
+/* ============================================================== saving */
+function plotBlob(scale){return new Promise(res=>{const W=cv.clientWidth,H=cv.clientHeight,c=document.createElement("canvas");c.width=Math.round(W*scale);c.height=Math.round(H*scale);
+  const x=c.getContext("2d");x.setTransform(scale,0,0,scale,0,0);exporting=true;try{renderPlot(x,W,H);}finally{exporting=false;}draw();c.toBlob(b=>res(b),"image/png");});}
+const stem=()=>{const t=activeTr();return t?baseName(t.label.replace(/ · /,"_")):"xrd";};
+$("svPlot").onclick=async()=>{download(stem()+"_plot.png",await plotBlob(2));$("saveStatus").textContent="Plot saved (PNG, 2× screen resolution).";};
+$("cpPlot").onclick=async()=>{try{const b=await plotBlob(2);await navigator.clipboard.write([new ClipboardItem({"image/png":b})]);$("saveStatus").textContent="Plot copied — paste with Ctrl+V.";}
+  catch(e){$("saveStatus").textContent="Copy failed in this browser ("+e.message+"); use Plot (PNG).";}};
+$("svPeaks").onclick=()=>{const list=$("expAll").checked?S.traces:[activeTr()].filter(Boolean),SL=shownLines();
+  let s="# Peak list — Bragg Studio\n# smoothing SG-2 window="+P.sg+" pts; SNIP bg window="+P.bgw+" deg; prominence >= k*sqrt(bg), k="+P.k+"; min rel="+P.rel+"%; min sep="+P.sep+" deg\n# area = net counts·deg over ±1.5·FWHM; CIF match within ±"+$("mTol").value+" deg 2theta (s="+$("csN").value+", zero="+($("z0").value||0)+")\n";
+  s+="file,range,trace,lambda_A,peak,manual,two_theta_deg,d_A,inv_d_nm-1,Q_A-1,FWHM_deg,I_raw,I_net,prominence,area_net,cif_phase,cif_hkl,cif_two_theta_deg\n";
+  for(const t of list)t.peaks.forEach((p,k)=>{const mt=(t===activeTr()&&SL.length)?peakMatch(p,SL):null;
+    s+=[JSON.stringify(t.fileMeta.name),t.range.index,JSON.stringify(t.label),t.lamUse,k+1,p.manual?1:0,nstr(p.tth),nstr(p.d),nstr(p.invd),nstr(p.q),nstr(p.fwhm),nstr(p.raw),nstr(p.net),nstr(p.prom),nstr(p.area),
+      mt?JSON.stringify(phLeg(mt.ph)):"",mt?JSON.stringify(mt.x.ln.hkl):"",mt?nstr(mt.x.tth):""].join(",")+"\n";});
+  download((list.length===1?stem():"peaks_all")+"_peaks.csv",s,"text/csv");};
+$("svData").onclick=()=>{const t=activeTr();if(!t)return;let s="# "+t.fileMeta.name+" — range "+t.range.index+"\n# lambda1 = "+(t.fileMeta.lambda1||"n/a")+" A\n# 2theta_deg\tcounts\tsmoothed\tbackground\n";
+  for(let i=0;i<t.tth.length;i++)s+=t.tth[i]+"\t"+t.y[i]+"\t"+t.sm[i]+"\t"+t.bg[i]+"\n";download(stem()+".xy",s);};
+$("svMeta").onclick=()=>{const t=activeTr();if(!t)return;const m=t.fileMeta;
+  download(baseName(m.name)+"_metadata.json",JSON.stringify({file:m.name,size:m.size,format:m.format,fields:m.fields.map(([k,v,n])=>({key:k,value:v,note:n})),warnings:m.warnings,
+    ranges:m.ranges.map(r=>{const {tth,y,...rest}=r;return rest;}),undecodedHeader:m.header},null,2),"application/json");};
+$("svLines").onclick=()=>{const ph=S.phases.find(p=>p.id===S.focus);if(!ph)return;const lam=lamNow();
+  let s=`# ${phNice(ph)} — ${ph.file}${ph.code?" — #"+ph.code:""}\n# cell ${ph.cell.join(" ")}\n# lambda = ${lam} A, s = ${phS(ph)}, zero shift = ${$("z0").value||0} deg\n# I = m|F|^2 * (1+cos^2 2th)/(sin^2 th cos th), normalised to 100\nhkl,m,d_calc_A,d_scaled_A,two_theta_deg,I_rel\n`;
+  for(const x of phCalc(ph,lam))s+=[JSON.stringify(x.ln.hkl),x.ln.m,nstr(x.ln.d),nstr(x.d),nstr(x.tth),nstr(x.I)].join(",")+"\n";
+  download(baseName(ph.file)+"_lines.csv",s,"text/csv");};
+
+/* ============================================================== file inputs + drag & drop (files and folders) */
+function routeFiles(items){const cifs=items.filter(o=>/\.cif$/i.test(o.f.name)),data=items.filter(o=>!/\.cif$/i.test(o.f.name)).map(o=>o.f);
+  if(cifs.length)addCIFs(cifs);if(data.length)loadFiles(data);}
+$("fileIn").addEventListener("change",e=>{routeFiles([...e.target.files].map(f=>({f,group:"Files"})));e.target.value="";});
+$("cifIn").addEventListener("change",e=>{addCIFs([...e.target.files]);e.target.value="";});
+/* ===== CIF pickers that remember where you were, and the history of loaded CIF folders / file sets.
+   Same browser storage (IndexedDB "saed-pickers", keys saed-cif / saed-cifdir / saed-cifrecent) as d-Spacing Studio, so both apps share the history
+   when opened in the same browser. Needs Chrome / Edge (File System Access); other browsers fall back to the normal file window without memory. */
+const FSA=typeof window.showOpenFilePicker==="function"&&typeof window.showDirectoryPicker==="function";
+const PICK_DB=(()=>{let p=null;const open=()=>p||(p=new Promise((res,rej)=>{const r=indexedDB.open("saed-pickers",1);r.onupgradeneeded=()=>r.result.createObjectStore("h");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}));
+  return {get:async k=>{try{const db=await open();return await new Promise(res=>{const q=db.transaction("h").objectStore("h").get(k);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null);});}catch(e){return null;}},
+          set:async(k,v)=>{try{const db=await open();await new Promise(res=>{const t=db.transaction("h","readwrite");t.objectStore("h").put(v,k);t.oncomplete=res;t.onerror=res;});}catch(e){}}};})();
+async function walkDir(dir,path,out){for await(const [name,h] of dir.entries()){if(h.kind==="directory")await walkDir(h,path.concat(name),out);
+  else if(/\.cif$/i.test(name))out.push({f:await h.getFile(),group:path[path.length-1]});}}
+async function pickWithMemory(key,fn,opts){const last=await PICK_DB.get(key);let r;
+  try{r=await fn(Object.assign({id:key},opts,last?{startIn:last}:{}));}
+  catch(err){if(err&&err.name==="AbortError")throw err;PICK_DB.set(key,null);r=await fn(Object.assign({id:key},opts));}   /* remembered place gone: open normally */
+  const h=Array.isArray(r)?r[0]:r;if(h)PICK_DB.set(key,h);return r;}
+function hookPicker(labelFor,run){const lab=document.querySelector(`label[for="${labelFor}"]`);if(!lab||!FSA)return;
+  lab.addEventListener("click",async e=>{if(e.target&&e.target.tagName==="INPUT")return;e.preventDefault();
+    try{await run();}catch(err){if(err&&err.name==="AbortError")return;console.warn(err);$(labelFor).click();}});}   /* picker failed: the browser's normal file window */
+hookPicker("cifIn",async()=>{const hs=await pickWithMemory("saed-cif",o=>window.showOpenFilePicker(o),{multiple:true,types:[{description:"CIF files",accept:{"chemical/x-cif":[".cif"]}}]});
+  if(hs&&hs[0]){PICK_DB.set("saed-cifdir",hs[0]);cifRecentAdd({kind:"files",hs});}   /* the folder picker then starts where these files are */
+  addCIFs(await Promise.all(hs.map(h=>h.getFile())));});
+hookPicker("cifDir",async()=>{const d=await pickWithMemory("saed-cifdir",o=>window.showDirectoryPicker(o),{mode:"read"});PICK_DB.set("saed-cif",d);cifRecentAdd({kind:"dir",h:d});
+  const out=[];await walkDir(d,[d.name],out);if(!out.length){$("cifStatus").textContent=`No .cif files found in “${d.name}”.`;return;}addCIFs(out);});
+const CIFR_MAX=15;
+async function cifRecentGet(){const L=await PICK_DB.get("saed-cifrecent");if(Array.isArray(L))return L;const old=await PICK_DB.get("saed-ciflast");return old?[{kind:"dir",h:old}]:[];}
+const cifRName=e=>e.kind==="dir"?e.h.name:(e.hs.length===1?e.hs[0].name.replace(/\.cif$/i,""):`${e.hs.length} files (${e.hs[0].name.replace(/\.cif$/i,"")}…)`);
+async function cifRSame(a,b){if(a.kind!==b.kind)return false;try{if(a.kind==="dir")return await a.h.isSameEntry(b.h);if(a.hs.length!==b.hs.length)return false;for(let i=0;i<a.hs.length;i++)if(!(await a.hs[i].isSameEntry(b.hs[i])))return false;return true;}catch(e){return false;}}
+async function cifRecentAdd(e){if(!FSA)return;const L=await cifRecentGet();const out=[e];for(const x of L){if(!(await cifRSame(x,e)))out.push(x);}await PICK_DB.set("saed-cifrecent",out.slice(0,CIFR_MAX));cifRecentUI();}
+async function cifRecentUI(){const box=$("cifRecent");if(!box)return;box.textContent="";if(!FSA)return;const L=await cifRecentGet();
+  L.forEach(e=>{const g=document.createElement("span");g.className="row2";g.style.cssText="gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden";
+    const b=document.createElement("button");b.textContent="↻ "+cifRName(e);b.style.cssText="border:0;border-radius:0;padding:4px 10px";b.title=e.kind==="dir"?`Load the CIF folder “${e.h.name}” again, without the dialog`:`Load these CIF files again: ${e.hs.map(h=>h.name).join(", ")}`;
+    const x=document.createElement("button");x.textContent="×";x.title="Remove from the history";x.style.cssText="border:0;border-left:1px solid var(--line);border-radius:0;padding:2px 8px";
+    b.onclick=()=>cifRecentOpen(e);
+    x.onclick=async()=>{const L2=await cifRecentGet(),keep=[];for(const y of L2)if(!(await cifRSame(y,e)))keep.push(y);await PICK_DB.set("saed-cifrecent",keep);cifRecentUI();};
+    g.appendChild(b);g.appendChild(x);box.appendChild(g);});}
+async function cifRecentOpen(e){const nm=cifRName(e);
+  try{const hs=e.kind==="dir"?[e.h]:e.hs;for(const h of hs){let st=await h.queryPermission({mode:"read"});if(st!=="granted")st=await h.requestPermission({mode:"read"});if(st!=="granted"){$("cifStatus").textContent="Permission to read “"+nm+"” was not given.";return;}}
+    if(e.kind==="dir"){const out=[];await walkDir(e.h,[e.h.name],out);if(!out.length){$("cifStatus").textContent=`No .cif files found in “${nm}”.`;return;}addCIFs(out);}
+    else addCIFs(await Promise.all(e.hs.map(h=>h.getFile())));
+    PICK_DB.set(e.kind==="dir"?"saed-cifdir":"saed-cif",e.kind==="dir"?e.h:e.hs[0]);cifRecentAdd(e);}   /* moves to the front; pickers start here next time */
+  catch(err){$("cifStatus").textContent=`Could not open “${nm}” (moved or deleted?): ${err.message}`;}}
+window.addEventListener("focus",()=>cifRecentUI());   /* picks made in d-Spacing Studio show up here too */
+cifRecentUI();
+$("cifDir").addEventListener("change",e=>{const fs=[...e.target.files].filter(f=>/\.cif$/i.test(f.name)).map(f=>{const parts=(f.webkitRelativePath||f.name).split("/");return {f,group:parts.length>1?parts[parts.length-2]:"Files"};});
+  if(!fs.length)$("cifStatus").textContent="No .cif files in that folder.";else addCIFs(fs);e.target.value="";});
+async function entriesToFiles(entry,parent,out){
+  if(entry.isFile){await new Promise(res=>entry.file(f=>{out.push({f,group:parent||"Files"});res();},()=>res()));return;}
+  if(entry.isDirectory){const rd=entry.createReader();let batch;do{batch=await new Promise(res=>rd.readEntries(res,()=>res([])));for(const en of batch)await entriesToFiles(en,entry.name,out);}while(batch.length);}}
+let dragN=0;
+window.addEventListener("dragenter",e=>{e.preventDefault();dragN++;$("drop").hidden=false;});
+window.addEventListener("dragleave",()=>{dragN--;if(dragN<=0){dragN=0;$("drop").hidden=true;}});
+window.addEventListener("dragover",e=>e.preventDefault());
+window.addEventListener("drop",async e=>{e.preventDefault();dragN=0;$("drop").hidden=true;
+  const its=[...(e.dataTransfer.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  if(its.length){const out=[];for(const en of its)await entriesToFiles(en,null,out);routeFiles(out);}
+  else routeFiles([...(e.dataTransfer.files||[])].map(f=>({f,group:"Files"})));});
+
+uiSync();renderPhases();draw();cfsUI(true);plotStarUI();
+
+</script>
+</body></html>
