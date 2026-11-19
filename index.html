@@ -107,7 +107,7 @@ tr.focus td{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 .rtag{font:500 .7rem var(--f-body);color:var(--accent);border:1px solid var(--accent);padding:0 6px;border-radius:999px}
 .dtag{font:500 .7rem var(--f-body);color:var(--warn);border:1px solid var(--warn);padding:0 6px;border-radius:999px}
 details summary{cursor:pointer;font-size:.82rem;color:var(--muted);margin-top:6px}
-.raw td{font-size:.74rem;cursor:default}
+.raw td{font-size:.72rem;cursor:default;padding:3px 6px}
 .err{color:var(--warn);border:1px solid var(--warn);border-radius:var(--r);padding:4px 8px;margin:4px 0;font-size:.8rem}
 #traceRows td:nth-child(3){text-align:left}
 td.man{color:var(--accent)}
@@ -195,10 +195,11 @@ td.mt{text-align:left;color:var(--match)}
   <section class="panel" style="display:grid;gap:10px">
     <div class="chartbar"><button class="coll" data-t="dataBody" style="padding:2px 9px">▾</button><h2>Data files</h2><span class="keys" id="dataCount"></span><span class="spacer"></span><button id="clearData" disabled>Remove all</button></div>
     <div id="dataBody" style="display:grid;gap:12px">
-    <div class="bench" style="grid-template-columns:minmax(0,1fr) minmax(0,30rem)">
+    <div class="bench" style="grid-template-columns:minmax(0,1fr) minmax(0,32rem)">
       <div class="tablebox" style="max-height:520px"><table><thead><tr><th>show</th><th></th><th style="text-align:left">trace</th><th>2θ range (°)</th><th>step (°)</th><th>points</th><th>λ1 (Å)</th><th>peaks</th><th></th></tr></thead><tbody id="traceRows"><tr><td colspan="9" style="text-align:center;color:var(--muted)">no data loaded</td></tr></tbody></table></div>
       <div id="meta" class="tablebox" style="max-height:520px;padding:6px 10px"><div class="keys">click a trace to see its metadata</div></div>
     </div>
+    <div id="hdrBox" style="border-top:1px solid var(--line);padding-top:8px"></div>
     <div style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px">
       <div class="row2"><button class="coll" data-t="peakBody" style="padding:2px 9px" aria-label="collapse peak list">▾</button><b id="peakTitle" style="font-family:var(--f-display);letter-spacing:.02em;font-size:1rem">Peaks</b><span class="keys" id="peakSub"></span><span class="spacer"></span><label class="keys"><input id="expAll" type="checkbox"> export all traces</label></div>
       <div id="peakBody" class="tablebox" style="max-height:480px"><table><thead><tr><th>#</th><th>2θ (°)</th><th>d (Å)</th><th>1/d (nm⁻¹)</th><th>FWHM (°)</th><th>I net</th><th>Area</th><th>I rel %</th><th style="text-align:left">CIF match</th><th></th></tr></thead><tbody id="peaks"><tr><td colspan="10" style="text-align:center;color:var(--muted)">no data</td></tr></tbody></table></div>
@@ -284,27 +285,39 @@ function parseStoeRaw(buf, name){
   const magic=readStr(u8,0,8);
   const meta={name, size:N, format:'STOE WinXPOW binary ('+magic+')', fields:[], ranges:[], header:[], warnings:[]};
   const F=(k,v,note)=>meta.fields.push([k,v,note||'']);
-  F('Format', magic, 'magic @0x000');
-  F('Data type', readStr(u8,8,8), '@0x008');
-  F('File created', readStr(u8,16,16), '@0x010');
-  F('Title', readStr(u8,32,272), '@0x020');
+  F('Format', magic, 'format tag, @ byte 0 · 8 bytes read as text (ASCII)');
+  F('Data type', readStr(u8,8,8), '@ byte 8 · 8 bytes read as text (ASCII), up to the first zero byte');
+  F('File created', readStr(u8,16,16), '@ byte 16 · 16 bytes read as text (ASCII), up to the first zero byte');
+  F('Title', readStr(u8,32,272), '@ byte 32 · up to 272 bytes read as text (ASCII), up to the first zero byte');
   if(N>334){
     const l1=f32(322), l2=f32(326);
     meta.lambda1=l1; meta.lambda2=l2;
-    F('λ1 (Å)', String(l1), '@0x142'+(lineName(l1)?' — matches '+lineName(l1):' — field assignment inferred'));
-    F('λ2 (Å)', String(l2), '@0x146'+(lineName(l2)?' — matches '+lineName(l2):' — field assignment inferred'));
+    F('λ1 (Å)', String(l1), '@ byte 322 · 4 bytes (32 bits) read as decimal number'+(lineName(l1)?' — matches '+lineName(l1):' — field assignment inferred'));
+    F('λ2 (Å)', String(l2), '@ byte 326 · 4 bytes (32 bits) read as decimal number'+(lineName(l2)?' — matches '+lineName(l2):' — field assignment inferred'));
   }
-  for(const [o,s] of printableRuns(u8,512,2048,4)) if((s.match(/[A-Za-z]/g)||[]).length>=3) F('Text', s, '@0x'+o.toString(16).padStart(3,'0')+' (unidentified field)');
+  const textBytes=new Set();
+  for(const [o,s] of printableRuns(u8,512,2048,4)) if((s.match(/[A-Za-z]/g)||[]).length>=3){ F('Text', s, '@ byte '+o+' · '+(s.length)+' bytes read as text (ASCII), found as a run of printable characters ending in a zero byte · meaning unidentified'); for(let i=o;i<o+s.length+1;i++) textBytes.add(i); }
 
   /* undecoded header words (0x130–0x7FF), shown verbatim */
-  for(let o=0x130;o<Math.min(2048,N-4);o+=2){
-    const w=dv.getUint16(o,true);
-    if(w===0) continue;
-    if(u8[o]>=32&&u8[o]<127&&u8[o+1]>=32&&u8[o+1]<127) continue; // part of a text run, already shown
-    const fv=dv.getFloat32(o,true);
-    meta.header.push({off:o,u16:w,i32:dv.getInt32(o,true),f32:plausibleFloat(fv)?f32clean(fv):null,
-      hex:Array.from(u8.slice(o,o+4)).map(b=>b.toString(16).padStart(2,'0')).join(' ')});
-  }
+  /* text fields as rows of the header list too */
+  const txtRow=(o,len,label,known)=>{const s=readStr(u8,o,len);meta.header.push({off:o,end:o+len-1,text:s,label,known,
+    hex:Array.from(u8.slice(o,o+s.length)).map(b=>b.toString(16).padStart(2,'0')).join(' '),u16:null,f32:null});};
+  txtRow(0,8,'Format',true);txtRow(8,8,'Data type',true);txtRow(16,16,'File created',true);txtRow(32,272,'Title',true);
+  for(const [o,s] of printableRuns(u8,512,2048,4)) if((s.match(/[A-Za-z]/g)||[]).length>=3) txtRow(o,s.length+1,'Text',false);
+  /* walk 0x130–0x7FF: a plausible 4-byte float is listed as one value, otherwise non-zero 16-bit words */
+  for(let o=0x130;o<Math.min(2048,N-4);){
+    if(textBytes.has(o)){ o+=2; continue; }
+    const fv=dv.getFloat32(o,true), w=dv.getUint16(o,true);
+    const hex=n=>Array.from(u8.slice(o,o+n)).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+    if(w===0 && plausibleFloat(fv) && o+6<=N){ /* two alignments possible: keep the one with the shorter decimal form */
+      const f2=dv.getFloat32(o+2,true);
+      const sig=v=>String(f32clean(v)).replace(/[-.]/g,'').replace(/^0+/,'').length;
+      if(plausibleFloat(f2) && sig(f2) < sig(fv)){ o+=2; continue; } }
+    if(plausibleFloat(fv) && !textBytes.has(o+2)){ meta.header.push({off:o,u16:null,i32:dv.getInt32(o,true),f32:f32clean(fv),hex:hex(4)}); o+=4; continue; }
+    if(w!==0) meta.header.push({off:o,u16:w,i32:null,f32:null,hex:hex(2)});
+    o+=2;
+  }  meta.header.sort((a,b)=>a.off-b.off);
+
 
   /* ranges: 512-byte header record (starts with two date strings) followed by int32 counts, padded to 512 */
   let off=2048;
@@ -338,7 +351,14 @@ function parseStoeRaw(buf, name){
     off += 512 + Math.ceil(np*4/512)*512;
   }
   if(!meta.ranges.length) throw new Error('STOE header found but no scan ranges could be decoded.');
-  F('Scan ranges', String(meta.ranges.length), 'decoded');
+  /* file layout in 512-byte blocks */
+  meta.layout=[];const L=(a,b,label,kind)=>meta.layout.push({a,b,blocks:(b-a+1)/512,label,kind});
+  L(0,meta.ranges[0].offset-1,'file header','file');
+  for(const r of meta.ranges){const nb=Math.ceil(r.npts*4/512);
+    L(r.offset,r.offset+511,'range '+r.index+' header','rhead');
+    L(r.offset+512,r.offset+512+nb*512-1,'range '+r.index+' counts ('+r.npts+' × 4 bytes'+(nb*512>r.npts*4?', zero-padded to a full block':'')+')','counts');}
+  const last=meta.layout[meta.layout.length-1].b; if(last<N-1) L(last+1,N-1,'rest of the file','rest');
+  F('Scan ranges', String(meta.ranges.length), 'counted: 512-byte blocks that start with a date text, each followed by its counts');
   /* identical-range detection */
   for(const r of meta.ranges){
     for(const q of meta.ranges){
@@ -905,26 +925,55 @@ function removeTrace(idx){S.traces.splice(idx,1);if(S.active>=S.traces.length)S.
 $("clearData").onclick=()=>{S.traces=[];S.active=-1;S.view=null;S.selPeak=-1;$("errors").innerHTML="";refreshAll();};
 function kvRows(rows){return '<table class="kv">'+rows.map(([k,v,n])=>`<tr><td>${esc(k)}</td><td class="v">${v}${n?`<span class="note">${esc(n)}</span>`:""}</td></tr>`).join("")+"</table>";}
 function renderMeta(){
-  const el=$("meta"),t=activeTr();if(!t){el.innerHTML='<div class="keys">click a trace to see its metadata</div>';return;}
+  const el=$("meta"),t=activeTr();if(!t){el.innerHTML='<div class="keys">click a trace to see its metadata</div>';$("hdrBox").innerHTML="";$("hdrBox").hidden=true;return;}
   const m=t.fileMeta;let h=`<div style="font-family:var(--f-display);font-weight:600;letter-spacing:.02em;margin:4px 0">${esc(m.name)}</div>`;
-  h+=kvRows([["Size",m.size.toLocaleString()+" bytes",""],...m.fields.map(([k,v,n])=>[k,esc(v),n])]);
+  h+=kvRows([["Size",m.size.toLocaleString()+" bytes","length of the file"],...m.fields.map(([k,v,n])=>[k,esc(v),n])]);
   if(m.warnings.length)h+=m.warnings.map(w=>'<div class="err">'+esc(w)+"</div>").join("");
   for(const r of m.ranges){const rows=[];
     if(!r.text){
-      rows.push(["Start / end time",esc(r.start)+" → "+esc(r.end),"@+0x00 / +0x10"]);
-      rows.push(["2θ start / end (°)",r.tth0+" / "+r.tth1,"@+0x2C / +0x34"]);
-      rows.push(["ω start / end (°)",r.om0+" / "+r.om1,"@+0x30 / +0x38 — ω = 2θ/2 here (symmetric scan)"]);
-      rows.push(["Step 2θ / ω (°)",r.dtth+" / "+r.dom,"@+0x3C / +0x40"]);
-      rows.push(["Points",String(r.npts),"@+0x22 — check: start + (n−1)·step = "+fmtG(r.tthEndCalc)]);
-      rows.push(["Value @+0x44",String(r.v68),"unidentified"]);
-      rows.push(["Stored min / max",r.sMin+" / "+r.sMax,(r.sMin||r.sMax)?((r.sMin===r.min&&r.sMax===r.max)?"@+0x78 / +0x7C — agrees with data":"@+0x78 / +0x7C — differs from data"):"@+0x78 / +0x7C — not filled"]);
-      rows.push(["Header flag @+0x20","0x"+r.flag.toString(16),"unidentified"]);
+      rows.push(["Start / end time",esc(r.start)+" → "+esc(r.end),"@ byte +0 (file byte "+(r.offset+0)+") / +16 (file byte "+(r.offset+16)+") · 16 bytes each, read as text (ASCII)"]);
+      rows.push(["2θ start / end (°)",r.tth0+" / "+r.tth1,"@ byte +44 (file byte "+(r.offset+44)+") / +52 (file byte "+(r.offset+52)+") · 4 bytes (32 bits) each, read as decimal number"]);
+      rows.push(["ω start / end (°)",r.om0+" / "+r.om1,"@ byte +48 (file byte "+(r.offset+48)+") / +56 (file byte "+(r.offset+56)+") · 4 bytes (32 bits) each, read as decimal number — ω = 2θ/2 here (symmetric scan)"]);
+      rows.push(["Step 2θ / ω (°)",r.dtth+" / "+r.dom,"@ byte +60 (file byte "+(r.offset+60)+") / +64 (file byte "+(r.offset+64)+") · 4 bytes (32 bits) each, read as decimal number"]);
+      rows.push(["Points",String(r.npts),"@ byte +34 (file byte "+(r.offset+34)+") · 4 bytes (32 bits) read as whole number — check: start + (n−1)·step = "+fmtG(r.tthEndCalc)]);
+      rows.push(["Value @ byte +68 (file byte "+(r.offset+68)+")",String(r.v68),"4 bytes (32 bits) read as decimal number · meaning unidentified"]);
+      rows.push(["Stored min / max",r.sMin+" / "+r.sMax,(r.sMin||r.sMax)?((r.sMin===r.min&&r.sMax===r.max)?"@ byte +120 (file byte "+(r.offset+120)+") / +124 (file byte "+(r.offset+124)+") · 4 bytes (32 bits) each, read as whole number — agrees with data":"@ byte +120 (file byte "+(r.offset+120)+") / +124 (file byte "+(r.offset+124)+") · 4 bytes (32 bits) each, read as whole number — differs from data"):"@ byte +120 (file byte "+(r.offset+120)+") / +124 (file byte "+(r.offset+124)+") · 4 bytes (32 bits) each, read as whole number — not filled"]);
+      rows.push(["Header flag @ byte +32 (file byte "+(r.offset+32)+")",r.flag.toString(2).padStart(16,"0"),"2 bytes (16 bits), shown as bits · meaning unidentified"]);
     }else rows.push(["x start / end",fmtG(r.tth0)+" / "+fmtG(r.tth1),""],["Mean step",fmtG(r.dtth),""],["Points",String(r.npts),""]);
     h+=`<div class="rangecard"><div class="rh">Range ${r.index}${r===t.range?' <span class="keys">(active)</span>':""}${r.dupOf?`<span class="dtag">counts identical to R${r.dupOf}</span>`:""}</div>${kvRows(rows)}`;
     if(!r.text)h+=timeBlock(r);
     h+="</div>";}
-  if(m.header.length)h+=`<details><summary>Undecoded file-header words (${m.header.length})</summary><div class="keys">STOE's format is undocumented; non-zero header values are shown verbatim.</div><table class="raw"><thead><tr><th>offset</th><th>bytes</th><th>u16</th><th>f32</th></tr></thead><tbody>${m.header.map(e=>`<tr><td>0x${e.off.toString(16).padStart(3,"0")}</td><td>${e.hex}</td><td>${e.u16}</td><td>${e.f32==null?"":e.f32}</td></tr>`).join("")}</tbody></table></details>`;
-  el.innerHTML=h;}
+  let hh="";
+  if(m.layout&&m.layout.length){const tot=m.layout.reduce((s,x)=>s+x.blocks,0);
+    hh+=`<details${S.layOpen===false?"":" open"} id="layDet" style="margin-bottom:8px"><summary style="font-family:var(--f-display);font-weight:600;font-size:1rem;color:var(--ink);letter-spacing:.02em">File layout (${m.layout.filter(x=>x.kind!=="counts"&&x.kind!=="rest").length} headers, ${tot} blocks of 512 bytes)</summary>
+    <div class="keys">The file is organised in 512-byte blocks: one file header, then for each range a 512-byte range header followed by its counts. Worked out from the range headers found in the file; ${tot} × 512 = ${(tot*512).toLocaleString()} bytes ${tot*512===m.size?"= the file size ✓":"≠ the file size ("+m.size.toLocaleString()+")"}.</div>
+    <table class="raw" style="width:auto;font-size:.85rem"><thead><tr><th>bytes</th><th>blocks</th><th style="text-align:left">content</th><th style="text-align:left">shown in the app as</th></tr></thead><tbody>${m.layout.map(x=>{const rn=(x.label.match(/range (\d+)/)||[])[1];const where=x.kind==="file"?"the values at the top of the metadata panel, and value by value in the list below":x.kind==="rhead"?"the fields of the “Range "+rn+"” card in the metadata panel":x.kind==="counts"?"the pattern (trace R"+rn+" in the plot and the data table)":"–";return `<tr><td style="white-space:nowrap">${x.a} – ${x.b}</td><td>${x.blocks}</td><td style="text-align:left">${x.kind==="file"||x.kind==="rhead"?"<b>"+esc(x.label)+"</b>":esc(x.label)}</td><td style="text-align:left;white-space:normal;font-family:var(--f-body)">${where}</td></tr>`;}).join("")}</tbody></table></details>`;}
+  if(m.header.length){const bf="bin",off=o=>String(o);
+    hh+=`<details${S.hdrOpen?" open":""} id="hdrDet"><summary style="font-family:var(--f-display);font-weight:600;font-size:1rem;color:var(--ink);letter-spacing:.02em">All non-zero file-header values (${m.header.length}: ${m.header.filter(e=>hdrStatus(m,e).ok).length} decoded, ${m.header.filter(e=>!hdrStatus(m,e).ok).length} not decoded)</summary><div class="keys">STOE's format is undocumented; every non-zero header value is listed, from byte 0, with its status: <span style="color:var(--match)">decoded</span> = meaning known and checked against the data or the file layout; <span style="color:var(--warn)">not decoded</span> = read out, but its meaning is unknown (a guess is given where there is one). byte no. = position in the file (bytes from the start); bytes = the stored bytes in binary, low byte first; 2 bytes (16 bits) = those bytes read as a whole number; 4 bytes (32 bits) = read as a decimal number; only the one that gives a sensible value is shown.</div>
+    <table class="raw"><thead><tr><th>byte no.</th><th style="text-align:left">bytes (binary)</th><th>2 bytes (16 bits)<br><span class="keys">as whole number</span></th><th>4 bytes (32 bits)<br><span class="keys">as decimal number</span></th><th style="text-align:left">status</th></tr></thead><tbody>${hdrRows(m).map(e=>e.block?`<tr style="background:color-mix(in srgb,var(--accent) 7%,transparent)"><td style="white-space:nowrap">${e.a}–${e.b}</td><td style="text-align:left;white-space:normal" colspan="3"><b>${esc(e.label)}</b><span class="keys"> · ${e.blocks} block${e.blocks>1?"s":""} of 512 bytes${e.kind==="rhead"?" · its fields are listed in the Range "+e.r+" card above":e.kind==="file"?"":""}</span></td><td style="text-align:left;color:var(--match)">decoded<span class="keys" style="display:block;color:var(--muted)">file layout</span></td></tr>`:`<tr><td style="white-space:nowrap">${e.text!=null?e.off+"–"+e.end:off(e.off)}</td><td style="text-align:left;${e.text!=null?"white-space:normal;max-width:34rem":"white-space:nowrap"}">${fmtBytes(e.hex,bf)}${e.text!=null&&e.end>=e.off+e.text.length?`<span class="keys" style="display:block">+ ${e.end-e.off+1-e.text.length} zero byte${e.end-e.off+1-e.text.length>1?"s":""} (end of text / padding)</span>`:""}</td><td>${e.u16==null?"":e.u16}</td><td>${e.f32==null?"":e.f32}</td>${(st=>`<td style="text-align:left;white-space:normal;min-width:12rem;color:${st.ok?"var(--match)":"var(--warn)"}">${st.ok?"decoded":"not decoded"}<span class="keys" style="display:block;color:var(--muted)">${esc(st.txt)}</span></td>`)(hdrStatus(m,e))}</tr>`).join("")}</tbody></table></details>`;}
+  el.innerHTML=h;$("hdrBox").innerHTML=hh;$("hdrBox").hidden=!hh;
+  const hd=$("hdrDet");if(hd)hd.ontoggle=()=>{S.hdrOpen=hd.open;};
+  const ld=$("layDet");if(ld)ld.ontoggle=()=>{S.layOpen=ld.open;};}
+/* status of a file-header value: decoded (meaning known and checked) or not decoded (with a guess where there is one) */
+/* the header values plus the layout blocks after the file header, in byte order */
+function hdrRows(m){const B=(m.layout||[]).filter(x=>x.kind!=="file").map(x=>({block:true,a:x.a,b:x.b,off:x.a,label:x.label,blocks:x.blocks,kind:x.kind,r:(x.label.match(/range (\d+)/)||[])[1]}));
+  const H=(m.layout||[]).find(x=>x.kind==="file");
+  return [...(H?[{block:true,a:H.a,b:H.b,off:-1,label:"file header (the values below)",blocks:H.blocks,kind:"file"}]:[]),...m.header,...B].sort((x,y)=>x.off-y.off);}
+function hdrStatus(m,e){const v=e.u16!=null?e.u16:e.f32,o=e.off,R=m.ranges,r1=R[0];
+  if(e.text!=null)return e.known?{ok:true,txt:e.label+": text “"+e.text+"” (ASCII, one byte per character; shown above)"}:{ok:false,txt:"text “"+e.text+"” (ASCII) — what this field is for is unknown"};
+  if(o===322)return {ok:true,txt:"λ1 = Cu Kα1 (shown above)"};
+  if(o===326)return {ok:true,txt:"λ2 = Cu Kα2 (shown above)"};
+  if(o===342&&r1&&e.f32===r1.dtth)return {ok:true,txt:"2θ step, same as in the range headers"};
+  if(o>=460&&o<=520&&e.u16!=null){
+    if(e.u16===m.size/512)return {ok:true,txt:"total number of 512-byte blocks in the file ("+m.size+" / 512)"};
+    if(r1&&e.u16===Math.ceil(r1.npts*4/512))return {ok:true,txt:"512-byte blocks of counts per range ("+r1.npts+" × 4 bytes)"};
+    for(const r of R)if(r.offset!=null&&e.u16===(r.offset+512)/512&&r.index>1)return {ok:true,txt:"block where the counts of range "+r.index+" start (byte "+(r.offset+512)+")"};
+    if(r1&&e.u16===r1.npts+1)return {ok:false,txt:"= number of points + 1; role unclear"};}
+  const G={314:"maybe part of a 130 / 130 / 40 / 40 group",316:"maybe part of a 130 / 130 / 40 / 40 group",318:"maybe tube voltage 40 kV?",320:"maybe tube current 40 mA?",
+    556:"maybe the detector 2θ step (0.05° = 2 × the ω value below)",560:"maybe the detector ω step",572:"maybe the 2θ start as set",576:"maybe the 2θ end as set (data ends at "+(r1?r1.tth1:"")+")",584:"maybe the time per step (1 s; the file name says 1s)"};
+  return {ok:false,txt:G[o]||"meaning unknown"};}
+function fmtBytes(hex,bf){const B=hex.split(" ").map(x=>parseInt(x,16));
+  return bf==="hex"?hex:bf==="dec"?B.join(" "):B.map(v=>v.toString(2).padStart(8,"0")).join(" ");}
 function timeBlock(r){
   if(r.calcStep===undefined)r.calcStep=r.dtth;
   const span=r.tth1-r.tth0,n=(r.calcStep===r.dtth)?r.npts:Math.floor(span/r.calcStep+1e-9)+1;
@@ -935,8 +984,7 @@ function timeBlock(r){
     ["Elapsed",el==null?"– (time stamps not readable)":fmtG(el)+" s = "+fmtG(el/60)+" min","end − start; stamps have 1-min resolution → ±60 s"],
     ["Step (° 2θ)",`<input type="number" step="any" min="0" data-r="${r.index}" data-f="calcStep" value="${r.calcStep}">`,"default = data step "+r.dtth+"° from header"],
     ["Number of steps",String(n),r.calcStep===r.dtth?"stored point count":"⌊(end − start)/step⌋ + 1, span "+fmtG(span)+"°"],
-    ["Time per step (s)",`<input type="number" step="any" min="0" data-r="${r.index}" data-f="tStep" value="${tStep==null?"":tStep}">`+(manual?` <button data-r="${r.index}" data-f="tReset" style="padding:1px 6px;font-size:.72rem">use time stamps</button>`:""),manual?"entered manually":(el!=null?"elapsed ÷ steps; range from ±60 s: "+fmtG(lo)+" – "+fmtG(hi)+" s":"enter value")],
-    ["<b>Total time</b>",tot==null?"–":"<b>"+fmtG(tot)+" s = "+fmtG(tot/60)+" min = "+hms(tot)+"</b>","steps × time per step"]])+"</div>";}
+    ["Time per step (s)",`<input type="number" step="any" min="0" data-r="${r.index}" data-f="tStep" value="${tStep==null?"":tStep}">`+(manual?` <button data-r="${r.index}" data-f="tReset" style="padding:1px 6px;font-size:.72rem">use time stamps</button>`:""),manual?"entered manually":(el!=null?"elapsed ÷ steps; range from ±60 s: "+fmtG(lo)+" – "+fmtG(hi)+" s":"enter value")]])+"</div>";}
 document.addEventListener("change",e=>{const el=e.target;if(!el.dataset||!el.dataset.f||!el.dataset.r||el.dataset.f==="tReset")return;
   const t=activeTr();if(!t)return;const r=t.fileMeta.ranges.find(q=>q.index===+el.dataset.r);if(!r)return;const v=el.value===""?null:+el.value;
   if(el.dataset.f==="tStep")r.tStepManual=(v>0)?v:null;else r.calcStep=(v>0)?v:r.dtth;renderMeta();});
